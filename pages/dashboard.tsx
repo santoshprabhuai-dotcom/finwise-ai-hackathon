@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase, getTransactions, getBudgets } from '@/lib/supabase'
-import { FaHeart, FaTrendingUp, FaTrendingDown, FaWallet, FaPercent } from 'react-icons/fa'
+import { FaHeart, FaArrowUp, FaArrowDown, FaWallet, FaPercent } from 'react-icons/fa'
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
@@ -185,7 +185,7 @@ export default function Dashboard() {
                   Your income is higher than expenses and you&apos;re maintaining a healthy savings rate of 66.4% this month.
                 </p>
                 <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
-                  <FaTrendingUp /> +8 points vs last month
+                  <FaArrowUp /> +8 points vs last month
                 </div>
               </div>
             </div>
@@ -208,7 +208,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-600'}`}>Total Income</span>
-                <FaTrendingUp className="text-emerald-500" />
+                <FaArrowUp className="text-emerald-500" />
               </div>
               <div className="text-2xl font-bold">₹{stats.totalIncome.toLocaleString('en-IN')}</div>
               <div className="text-green-600 text-xs mt-1">↑ +12.4% vs Aug 2026</div>
@@ -223,7 +223,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-slate-400' : 'text-gray-600'}`}>Total Expenses</span>
-                <FaTrendingDown className="text-red-500" />
+                <FaArrowDown className="text-red-500" />
               </div>
               <div className="text-2xl font-bold">₹{stats.totalExpenses.toLocaleString('en-IN')}</div>
               <div className="text-red-600 text-xs mt-1">↓ -4.2% vs Aug 2026</div>
