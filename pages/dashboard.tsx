@@ -180,9 +180,9 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex-1">
-                <p className="font-semibold mb-3">You're on the right track! 🎉</p>
+                <p className="font-semibold mb-3">You&apos;re on the right track! 🎉</p>
                 <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-gray-600'} mb-3`}>
-                  Your income is higher than expenses and you're maintaining a healthy savings rate of 66.4% this month.
+                  Your income is higher than expenses and you&apos;re maintaining a healthy savings rate of 66.4% this month.
                 </p>
                 <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
                   <FaTrendingUp /> +8 points vs last month
