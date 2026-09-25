@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  background-color: #f9fafb;
+  color: #111827;
+  transition: all 0.3s ease;
+}
+
+body.dark {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark mode scrollbar */
+body.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+body.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+body.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Custom Components */
+.btn-primary {
+  @apply px-4 py-2 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-gray-200 text-gray-900 rounded-lg font-semibold hover:bg-gray-300 transition-colors;
+}
+
+.card {
+  @apply bg-white rounded-xl p-6 shadow-soft hover:shadow-md transition-shadow;
+}
+
+.card.dark {
+  @apply bg-slate-800 text-white;
+}
+
+.input-field {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600 transition-all;
+}
+
+.input-field:focus {
+  border-color: transparent;
+}
+
+/* Gradient Text */
+.gradient-text {
+  @apply bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent;
+}
+
+/* Loading Animation */
+.skeleton {
+  @apply bg-gray-200 animate-pulse rounded;
+}
+
+.skeleton.dark {
+  @apply bg-slate-700;
+}
+
+/* Responsive Grid */
+@media (max-width: 768px) {
+  .responsive-grid {
+    @apply grid-cols-1;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .responsive-grid {
+    @apply grid-cols-2;
+  }
+}
+
+@media (min-width: 1025px) {
+  .responsive-grid {
+    @apply grid-cols-3;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+  }
+  
+  .no-print {
+    display: none;
+  }
+}
+
+/* Focus Visible for Accessibility */
+*:focus-visible {
+  outline: 2px solid #14b8a6;
+  outline-offset: 2px;
+}
+
+/* Smooth Transitions */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
