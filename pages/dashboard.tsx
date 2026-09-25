@@ -131,7 +131,7 @@ export default function Dashboard() {
             Good morning, {user?.user_metadata?.full_name || 'Friend'} 👋
           </h2>
           <p className={theme === 'dark' ? 'text-slate-400' : 'text-gray-500'}>
-            Here's your financial overview for September 2026.
+            Here&apos;s your financial overview for September 2026.
           </p>
         </motion.div>
 
