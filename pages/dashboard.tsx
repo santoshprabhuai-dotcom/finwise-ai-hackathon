@@ -86,9 +86,12 @@ export default function Dashboard() {
       <div className={`flex items-center justify-center min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-white'}`}>
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Please sign in to continue</h2>
-          <a href="/login" className="text-blue-600 hover:underline">
-            Go to Login
-          </a>
+          <button
+  onClick={() => window.location.href = '/login'}
+  className="text-blue-600 hover:underline"
+>
+  Go to Login
+</button>
         </div>
       </div>
     )
