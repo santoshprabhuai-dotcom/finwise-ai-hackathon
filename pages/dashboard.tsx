@@ -3450,6 +3450,75 @@ ${spendingDNA
       )}
 
       
+      {/* Asset Modal */}
+      {showAssetModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl p-6">
+            <div className="flex items-center justify-between mb-5"><div><h2 className="text-xl font-bold">{editingAssetId ? 'Edit Asset' : 'Add Asset'}</h2><p className="text-sm text-slate-400">Record savings, investments, property or other assets.</p></div><button onClick={() => setShowAssetModal(false)} className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center"><FaTimes /></button></div>
+            <div className="space-y-4">
+              <input value={assetForm.name} onChange={(e) => setAssetForm({...assetForm,name:e.target.value})} placeholder="Asset name" className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" />
+              <select value={assetForm.type} onChange={(e) => setAssetForm({...assetForm,type:e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800">
+                <option>Savings / Cash</option><option>Fixed Deposit</option><option>Stocks</option><option>Mutual Funds</option><option>Gold</option><option>Real Estate</option><option>Retirement</option><option>Other</option>
+              </select>
+              <div className="grid grid-cols-2 gap-3"><input type="number" min="0" value={assetForm.current_value} onChange={(e) => setAssetForm({...assetForm,current_value:e.target.value})} placeholder="Current value" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /><input type="number" min="0" value={assetForm.purchase_value} onChange={(e) => setAssetForm({...assetForm,purchase_value:e.target.value})} placeholder="Purchase value (optional)" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /></div>
+              <input type="date" value={assetForm.as_of_date} onChange={(e) => setAssetForm({...assetForm,as_of_date:e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" />
+              <textarea value={assetForm.notes} onChange={(e) => setAssetForm({...assetForm,notes:e.target.value})} placeholder="Notes (optional)" className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800 min-h-20" />
+              <button onClick={saveAsset} className="w-full py-3 rounded-xl bg-teal-500 text-white font-bold">{editingAssetId ? 'Update Asset' : 'Save Asset'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Liability Modal */}
+      {showLiabilityModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl p-6">
+            <div className="flex items-center justify-between mb-5"><div><h2 className="text-xl font-bold">{editingLiabilityId ? 'Edit Liability' : 'Add Liability'}</h2><p className="text-sm text-slate-400">Record loans, credit cards and other debts.</p></div><button onClick={() => setShowLiabilityModal(false)} className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center"><FaTimes /></button></div>
+            <div className="space-y-4">
+              <input value={liabilityForm.name} onChange={(e) => setLiabilityForm({...liabilityForm,name:e.target.value})} placeholder="Liability name" className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" />
+              <select value={liabilityForm.type} onChange={(e) => setLiabilityForm({...liabilityForm,type:e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800">
+                <option>Home Loan</option><option>Auto Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Credit Card</option><option>Overdraft</option><option>Other</option>
+              </select>
+              <div className="grid grid-cols-2 gap-3"><input type="number" min="0" value={liabilityForm.outstanding_amount} onChange={(e) => setLiabilityForm({...liabilityForm,outstanding_amount:e.target.value})} placeholder="Outstanding amount" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /><input type="number" min="0" value={liabilityForm.original_amount} onChange={(e) => setLiabilityForm({...liabilityForm,original_amount:e.target.value})} placeholder="Original amount" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /></div>
+              <div className="grid grid-cols-3 gap-3"><input type="number" min="0" step="0.01" value={liabilityForm.interest_rate} onChange={(e) => setLiabilityForm({...liabilityForm,interest_rate:e.target.value})} placeholder="Interest %" className="px-3 py-3 rounded-xl border border-slate-700 bg-slate-800" /><input type="number" min="0" value={liabilityForm.monthly_payment} onChange={(e) => setLiabilityForm({...liabilityForm,monthly_payment:e.target.value})} placeholder="Monthly EMI" className="px-3 py-3 rounded-xl border border-slate-700 bg-slate-800" /><input type="number" min="0" value={liabilityForm.credit_limit} onChange={(e) => setLiabilityForm({...liabilityForm,credit_limit:e.target.value})} placeholder="Credit limit" className="px-3 py-3 rounded-xl border border-slate-700 bg-slate-800" /></div>
+              <input type="date" value={liabilityForm.as_of_date} onChange={(e) => setLiabilityForm({...liabilityForm,as_of_date:e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" />
+              <textarea value={liabilityForm.notes} onChange={(e) => setLiabilityForm({...liabilityForm,notes:e.target.value})} placeholder="Notes (optional)" className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800 min-h-20" />
+              <button onClick={saveLiability} className="w-full py-3 rounded-xl bg-orange-500 text-white font-bold">{editingLiabilityId ? 'Update Liability' : 'Save Liability'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Modal */}
+      {showCreditModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl p-6">
+            <div className="flex items-center justify-between mb-5"><div><h2 className="text-xl font-bold">{editingCreditId ? 'Edit Credit Report' : 'Add Credit Report'}</h2><p className="text-sm text-slate-400">Enter figures from your official bureau report. FinWise does not calculate a CIBIL score.</p></div><button onClick={() => setShowCreditModal(false)} className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center"><FaTimes /></button></div>
+            <div className="space-y-4">
+              <input type="date" value={creditForm.report_date} onChange={(e) => setCreditForm({...creditForm,report_date:e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" />
+              <div className="grid grid-cols-2 gap-3"><input type="number" min="300" max="900" value={creditForm.cibil_score} onChange={(e) => setCreditForm({...creditForm,cibil_score:e.target.value})} placeholder="CIBIL score (300–900)" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /><input type="number" min="0" value={creditForm.late_payments_12m} onChange={(e) => setCreditForm({...creditForm,late_payments_12m:e.target.value})} placeholder="Late payments, 12m" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /></div>
+              <div className="grid grid-cols-2 gap-3"><input value={creditForm.other_score_name} onChange={(e) => setCreditForm({...creditForm,other_score_name:e.target.value})} placeholder="Other score name" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /><input type="number" value={creditForm.other_score} onChange={(e) => setCreditForm({...creditForm,other_score:e.target.value})} placeholder="Other score" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /></div>
+              <div className="grid grid-cols-2 gap-3"><input type="number" min="0" value={creditForm.total_credit_limit} onChange={(e) => setCreditForm({...creditForm,total_credit_limit:e.target.value})} placeholder="Total credit limit" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /><input type="number" min="0" value={creditForm.total_credit_used} onChange={(e) => setCreditForm({...creditForm,total_credit_used:e.target.value})} placeholder="Total credit used" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /></div>
+              <textarea value={creditForm.notes} onChange={(e) => setCreditForm({...creditForm,notes:e.target.value})} placeholder="Notes from the report" className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800 min-h-20" />
+              <button onClick={saveCreditProfile} className="w-full py-3 rounded-xl bg-blue-500 text-white font-bold">{editingCreditId ? 'Update Credit Report' : 'Save Credit Report'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Excel Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl p-6">
+            <div className="flex items-center justify-between mb-5"><div><h2 className="text-xl font-bold">Import Excel</h2><p className="text-sm text-slate-400">Upload the FinWise workbook format.</p></div><button onClick={() => setShowImportModal(false)} className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center"><FaTimes /></button></div>
+            <div className="text-sm text-slate-400 mb-4">Required sheets: Transactions, Assets, Liabilities, Credit_Profile. The import adds rows; it never deletes existing data.</div>
+            <input type="file" accept=".xlsx,.xls" onChange={(e) => e.target.files?.[0] && importWorkbook(e.target.files[0])} className="w-full text-sm" />
+            {importMessage && <div className="mt-4 rounded-xl bg-violet-500/10 border border-violet-400/30 p-3 text-sm">{importMessage}</div>}
+            <button onClick={() => setShowImportModal(false)} className="mt-5 w-full py-3 rounded-xl border border-slate-700 font-bold">Close</button>
+          </div>
+        </div>
+      )}
+
       {/* AI Coach Modal */}
       {showCoach && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
