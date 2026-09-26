@@ -665,6 +665,37 @@ const [budgetForm, setBudgetForm] = useState({
     })
   }, [budgets, monthTransactions])
 
+  const totalAssets = useMemo(
+    () => assets.reduce((sum, item) => sum + Number(item.current_value || 0), 0),
+    [assets]
+  )
+
+  const totalLiabilities = useMemo(
+    () => liabilities.reduce((sum, item) => sum + Number(item.outstanding_amount || 0), 0),
+    [liabilities]
+  )
+
+  const netWorth = totalAssets - totalLiabilities
+
+  const latestCredit = creditProfiles[0] || null
+  const creditUtilization =
+    latestCredit?.total_credit_limit > 0
+      ? (Number(latestCredit.total_credit_used || 0) / Number(latestCredit.total_credit_limit)) * 100
+      : 0
+
+  const finwiseCreditHealth = useMemo(() => {
+    let score = 70
+    if (latestCredit?.cibil_score) {
+      score = 40 + ((Number(latestCredit.cibil_score) - 300) / 600) * 45
+    }
+    if (creditUtilization > 30) score -= Math.min((creditUtilization - 30) * 0.35, 15)
+    if (Number(latestCredit?.late_payments_12m || 0) > 0) {
+      score -= Math.min(Number(latestCredit.late_payments_12m) * 4, 20)
+    }
+    if (totalAssets > 0 && totalLiabilities / totalAssets > 0.8) score -= 10
+    return Math.max(0, Math.min(100, Math.round(score)))
+  }, [latestCredit, creditUtilization, totalAssets, totalLiabilities])
+
   const nav = [
     {
       label: 'Overview',
@@ -685,6 +716,18 @@ const [budgetForm, setBudgetForm] = useState({
     {
       label: 'Goals',
       icon: <FaBullseye />,
+    },
+    {
+      label: 'Net Worth',
+      icon: <FaBalanceScale />,
+    },
+    {
+      label: 'Credit Health',
+      icon: <FaCreditCard />,
+    },
+    {
+      label: 'Import',
+      icon: <FaUpload />,
     },
     {
       label: 'Settings',
