@@ -2964,7 +2964,7 @@ ${spendingDNA
                 <div className={card + " rounded-2xl border p-5"}>
                   <div className="flex items-center justify-between"><p className={'text-sm font-semibold ' + muted}>Total Liabilities</p><FaArrowDown className="text-red-500" /></div>
                   <p className="text-3xl font-black text-red-500 mt-3">{money(totalLiabilities)}</p>
-                  <p className={'text-xs mt-2 ' + muted}>{liabilities.length} recorded liability{liabilities.length === 1 ? '' : 'ies'}</p>
+                  <p className={'text-xs mt-2 ' + muted}>{liabilities.length} recorded liabilit{liabilities.length === 1 ? 'y' : 'ies'}</p>
                 </div>
                 <div className={card + " rounded-2xl border p-5"}>
                   <div className="flex items-center justify-between"><p className={'text-sm font-semibold ' + muted}>Reported CIBIL</p><FaCreditCard className="text-cyan-500" /></div>
