@@ -696,22 +696,13 @@ ${spendingDNA
         className={`${sidebar} text-white w-64 min-h-screen hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r`}
       >
         <div className="p-6 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-slate-950 flex items-center justify-center">
+          <div className="w-full overflow-hidden rounded-2xl">
   <img
-    src="/finwise-logo.png"
-    alt="FinWise AI"
-    className="w-full h-full object-contain"
+    src="/finwise-header.png"
+    alt="FinWise AI - Plan your future"
+    className="w-full h-auto object-contain"
   />
 </div>
-
-            <div>
-              <div className="font-bold text-xl">FinWise AI</div>
-              <div className="text-xs text-slate-400">
-                Your money. Smarter.
-              </div>
-            </div>
-          </div>
         </div>
 
         <nav className="p-4 space-y-2 flex-1">
