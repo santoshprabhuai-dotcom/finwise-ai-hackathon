@@ -56,6 +56,86 @@ const COLORS = [
 const money = (value: number) =>
   `₹${Math.round(value || 0).toLocaleString('en-IN')}`
 
+const EXPENSE_CATEGORIES = [
+  'Housing',
+  'Debt & Loans',
+  'Food',
+  'Utilities',
+  'Transportation',
+  'Health',
+  'Insurance',
+  'Education',
+  'Shopping',
+  'Entertainment',
+  'Personal Care',
+  'Subscriptions',
+  'Travel',
+  'Taxes & Government',
+  'Fees & Charges',
+  'Other Expense',
+]
+
+const INCOME_CATEGORIES = [
+  'Salary',
+  'Business Income',
+  'Side Income',
+  'Dividends',
+  'FD Interest',
+  'Interest Income',
+  'Capital Gains',
+  'Rental Income',
+  'Bonus',
+  'Pension',
+  'Refunds',
+  'Other Income',
+]
+
+const categoryKeywords: Record<string, string[]> = {
+  Housing: ['rent', 'house rent', 'home rent', 'mortgage', 'maintenance', 'society'],
+  'Debt & Loans': ['emi', 'loan repayment', 'loan payment', 'credit card payment', 'installment'],
+  Food: ['food', 'grocery', 'groceries', 'restaurant', 'dinner', 'lunch', 'breakfast', 'swiggy', 'zomato'],
+  Utilities: ['electricity', 'water bill', 'gas bill', 'internet', 'wifi', 'mobile bill', 'phone bill', 'utility'],
+  Transportation: ['fuel', 'petrol', 'diesel', 'uber', 'ola', 'cab', 'metro', 'bus', 'train', 'parking', 'transport'],
+  Health: ['hospital', 'doctor', 'medical', 'medicine', 'pharmacy', 'health'],
+  Insurance: ['insurance', 'premium'],
+  Education: ['school', 'college', 'tuition', 'course', 'education', 'books'],
+  Shopping: ['shopping', 'amazon', 'flipkart', 'clothes', 'electronics'],
+  Entertainment: ['movie', 'cinema', 'netflix', 'prime video', 'spotify', 'entertainment'],
+  'Personal Care': ['salon', 'gym', 'spa', 'personal care'],
+  Subscriptions: ['subscription', 'membership'],
+  Travel: ['hotel', 'flight', 'airbnb', 'travel', 'vacation'],
+  'Taxes & Government': ['income tax', 'gst', 'property tax', 'tax', 'government fee'],
+  'Fees & Charges': ['bank fee', 'bank charge', 'service charge', 'processing fee', 'late fee', 'atm fee'],
+  Salary: ['salary', 'payroll', 'wages'],
+  'Business Income': ['business income', 'business payment', 'client payment', 'invoice', 'sales income'],
+  'Side Income': ['side income', 'freelance', 'freelancing', 'consulting', 'gig income', 'part time'],
+  Dividends: ['dividend', 'dividends'],
+  'FD Interest': ['fd interest', 'fixed deposit interest', 'fixed deposit', 'term deposit interest'],
+  'Interest Income': ['interest received', 'interest income', 'savings interest', 'bank interest'],
+  'Capital Gains': ['capital gain', 'capital gains', 'profit on shares', 'profit on securities', 'securities gain', 'stock sale gain', 'mutual fund gain'],
+  'Rental Income': ['rental income', 'rent received', 'rent received from'],
+  Bonus: ['bonus', 'incentive'],
+  Pension: ['pension', 'retirement income'],
+  Refunds: ['refund', 'cashback', 'reimbursement'],
+}
+
+const categoriesForType = (type: string) =>
+  type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+
+const ruleBasedCategory = (description: string, type: string) => {
+  const text = description.toLowerCase().trim()
+  const allowed = new Set(categoriesForType(type))
+
+  for (const [category, keywords] of Object.entries(categoryKeywords)) {
+    if (!allowed.has(category)) continue
+    if (keywords.some((keyword) => text.includes(keyword))) {
+      return category
+    }
+  }
+
+  return type === 'income' ? 'Other Income' : 'Other Expense'
+}
+
 const dateLabel = (value: string) => {
   if (!value) return '-'
 
@@ -112,6 +192,9 @@ const [budgetForm, setBudgetForm] = useState({
     category: 'Food',
     date: new Date().toISOString().split('T')[0],
   })
+
+  const [smartCategoryLoading, setSmartCategoryLoading] = useState(false)
+  const [smartCategoryMessage, setSmartCategoryMessage] = useState('')
 
   const [coachMessages, setCoachMessages] = useState<any[]>([])
   const [coachInput, setCoachInput] = useState('')
@@ -415,20 +498,104 @@ const [budgetForm, setBudgetForm] = useState({
     },
   ]
 
-  const submitTransaction = async () => {
-    if (!user) return
+  const smartCategorizeTransaction = async () => {
+    const description = transactionForm.description.trim()
 
-    if (!transactionForm.description || !transactionForm.amount) {
-      alert('Please enter a description and amount.')
+    if (!description) {
+      setSmartCategoryMessage('Enter a description first.')
       return
     }
 
+    const ruleCategory = ruleBasedCategory(
+      description,
+      transactionForm.transaction_type
+    )
+
+    if (ruleCategory !== 'Other Income' && ruleCategory !== 'Other Expense') {
+      setTransactionForm((current) => ({
+        ...current,
+        category: ruleCategory,
+      }))
+      setSmartCategoryMessage(`Suggested: ${ruleCategory}`)
+      return
+    }
+
+    setSmartCategoryLoading(true)
+    setSmartCategoryMessage('FinWise AI is classifying this transaction...')
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system: `You classify personal finance transactions.
+Return ONLY one category name from this allowed list:
+${categoriesForType(transactionForm.transaction_type).join(', ')}
+
+Do not invent a category. Choose the closest match from the list.`,
+          messages: [
+            {
+              role: 'user',
+              content: `Transaction type: ${transactionForm.transaction_type}
+Description: ${description}`,
+            },
+          ],
+        }),
+      })
+
+      const data = await response.json()
+      const content = String(data.content || '').trim()
+      const allowed = categoriesForType(transactionForm.transaction_type)
+      const category = allowed.find(
+        (item) => content.toLowerCase().includes(item.toLowerCase())
+      )
+
+      if (!category) {
+        throw new Error('No valid category returned')
+      }
+
+      setTransactionForm((current) => ({
+        ...current,
+        category,
+      }))
+      setSmartCategoryMessage(`AI suggested: ${category}`)
+    } catch {
+      const fallback = ruleBasedCategory(
+        description,
+        transactionForm.transaction_type
+      )
+      setTransactionForm((current) => ({
+        ...current,
+        category: fallback,
+      }))
+      setSmartCategoryMessage(`Suggested: ${fallback}`)
+    } finally {
+      setSmartCategoryLoading(false)
+    }
+  }
+
+  const submitTransaction = async () => {
+    if (!user) return
+
+    const description = transactionForm.description.trim()
+    const amount = Number(transactionForm.amount)
+
+    if (!description || !Number.isFinite(amount) || amount <= 0) {
+      alert('Please enter a valid description and an amount greater than 0.')
+      return
+    }
+
+    const validCategories = categoriesForType(transactionForm.transaction_type)
+    const category = validCategories.includes(transactionForm.category)
+      ? transactionForm.category
+      : ruleBasedCategory(description, transactionForm.transaction_type)
+
     const result = await addTransaction({
       user_id: user.id,
-      description: transactionForm.description,
-      amount: Number(transactionForm.amount),
+      description,
+      amount,
       transaction_type: transactionForm.transaction_type,
-      category: transactionForm.category,
+      category,
       date: transactionForm.date,
     })
 
@@ -441,7 +608,7 @@ const [budgetForm, setBudgetForm] = useState({
       description: '',
       amount: '',
       transaction_type: 'expense',
-      category: 'Food',
+      category: 'Other Expense',
       date: new Date().toISOString().split('T')[0],
     })
 
@@ -1697,24 +1864,44 @@ ${spendingDNA
             </div>
 
             <div className="space-y-4">
-              <input
-                value={transactionForm.description}
-                onChange={(e) =>
-                  setTransactionForm({
-                    ...transactionForm,
-                    description: e.target.value,
-                  })
-                }
-                placeholder="Description"
-                className={`w-full px-4 py-3 rounded-xl border ${
-                  isDark
-                    ? 'bg-slate-900 border-slate-700'
-                    : 'bg-white border-gray-200'
-                }`}
-              />
+              <div className="flex gap-2">
+                <input
+                  value={transactionForm.description}
+                  onChange={(e) =>
+                    setTransactionForm({
+                      ...transactionForm,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Description (e.g. HDFC FD interest, home rent, SBI EMI)"
+                  className={`flex-1 px-4 py-3 rounded-xl border ${
+                    isDark
+                      ? 'bg-slate-900 border-slate-700'
+                      : 'bg-white border-gray-200'
+                  }`}
+                />
+
+                <button
+                  type="button"
+                  onClick={smartCategorizeTransaction}
+                  disabled={smartCategoryLoading}
+                  className="px-4 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold text-sm disabled:opacity-60"
+                  title="Let FinWise AI categorize this transaction"
+                >
+                  {smartCategoryLoading ? '...' : 'AI'}
+                </button>
+              </div>
+
+              {smartCategoryMessage && (
+                <div className="rounded-xl bg-violet-500/10 border border-violet-400/30 px-4 py-2 text-sm">
+                  ✨ {smartCategoryMessage}
+                </div>
+              )}
 
               <input
                 type="number"
+                min="0"
+                step="0.01"
                 value={transactionForm.amount}
                 onChange={(e) =>
                   setTransactionForm({
@@ -1733,12 +1920,16 @@ ${spendingDNA
               <div className="grid grid-cols-2 gap-3">
                 <select
                   value={transactionForm.transaction_type}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const type = e.target.value
                     setTransactionForm({
                       ...transactionForm,
-                      transaction_type: e.target.value,
+                      transaction_type: type,
+                      category:
+                        type === 'income' ? 'Other Income' : 'Other Expense',
                     })
-                  }
+                    setSmartCategoryMessage('')
+                  }}
                   className={`px-4 py-3 rounded-xl border ${
                     isDark
                       ? 'bg-slate-900 border-slate-700'
@@ -1763,15 +1954,11 @@ ${spendingDNA
                       : 'bg-white border-gray-200'
                   }`}
                 >
-                  <option>Food</option>
-                  <option>Housing</option>
-                  <option>Transportation</option>
-                  <option>Shopping</option>
-                  <option>Entertainment</option>
-                  <option>Health</option>
-                  <option>Education</option>
-                  <option>Salary</option>
-                  <option>Other</option>
+                  {categoriesForType(transactionForm.transaction_type).map(
+                    (category) => (
+                      <option key={category}>{category}</option>
+                    )
+                  )}
                 </select>
               </div>
 
