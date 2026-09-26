@@ -851,7 +851,7 @@ ${spendingDNA
                           ? 'You are building strong habits! 🎉'
                           : healthScore >= 40
                           ? 'There is room to improve. 💡'
-                          : 'Let&apos;s strengthen your finances. 🚀'}
+                          : 'Let’s strengthen your finances. 🚀'}
                       </p>
 
                       <p className={`text-sm ${muted}`}>
