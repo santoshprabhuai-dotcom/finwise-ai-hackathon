@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import * as XLSX from 'xlsx'
 import {
   BarChart,
   Bar,
@@ -37,6 +38,13 @@ import {
   FaStop,
   FaExclamationTriangle,
   FaInfoCircle,
+  FaEdit,
+  FaTrash,
+  FaUpload,
+  FaDownload,
+  FaLandmark,
+  FaBalanceScale,
+  FaCreditCard,
 } from 'react-icons/fa'
 
 import {
@@ -45,8 +53,26 @@ import {
   getBudgets,
   getGoals,
   addTransaction,
+  updateTransaction,
+  deleteTransaction,
   addBudget,
+  updateBudget,
+  deleteBudget,
   addGoal,
+  updateGoal,
+  deleteGoal,
+  getAssets,
+  addAsset,
+  updateAsset,
+  deleteAsset,
+  getLiabilities,
+  addLiability,
+  updateLiability,
+  deleteLiability,
+  getCreditProfiles,
+  addCreditProfile,
+  updateCreditProfile,
+  deleteCreditProfile,
   signOut,
 } from '@/lib/supabase'
 
