@@ -82,4 +82,10 @@ create policy "Users can update own credit profiles" on public.credit_profiles f
 drop policy if exists "Users can delete own credit profiles" on public.credit_profiles;
 create policy "Users can delete own credit profiles" on public.credit_profiles for delete using (auth.uid() = user_id);
 
+-- Keep goal planner fields compatible with the current dashboard.
+alter table public.goals add column if not exists target_date date;
+alter table public.goals add column if not exists inflation_rate numeric(6,3) default 6;
+alter table public.goals add column if not exists return_rate numeric(6,3) default 8;
+alter table public.goals add column if not exists risk_profile text default 'Balanced';
+
 notify pgrst, 'reload schema';
