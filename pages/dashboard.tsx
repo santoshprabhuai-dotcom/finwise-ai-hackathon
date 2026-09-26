@@ -1195,7 +1195,7 @@ ${spendingDNA
                 className="mb-7"
               >
                 <h2 className="text-3xl font-bold">
-                  Good morning,{' '}
+                  Good Morning,{' '}
                   {user?.user_metadata?.full_name || 'Friend'} 👋
                 </h2>
 
