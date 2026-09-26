@@ -912,6 +912,336 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
     await loadDashboardData(user.id)
   }
 
+  const resetTransactionForm = () => {
+    setTransactionForm({
+      description: '',
+      amount: '',
+      transaction_type: 'expense',
+      category: 'Food',
+      date: new Date().toISOString().split('T')[0],
+    })
+    setEditingTransactionId(null)
+    setSmartCategoryMessage('')
+  }
+
+  const openEditTransaction = (transaction: any) => {
+    setTransactionForm({
+      description: transaction.description || '',
+      amount: String(transaction.amount || ''),
+      transaction_type: transaction.transaction_type || 'expense',
+      category: transaction.category || (transaction.transaction_type === 'income' ? 'Salary' : 'Food'),
+      date: String(transaction.date || '').slice(0, 10),
+    })
+    setEditingTransactionId(transaction.id)
+    setShowTransactionModal(true)
+  }
+
+  const removeTransaction = async (id: string) => {
+    if (!window.confirm('Delete this transaction? This cannot be undone.')) return
+    const result = await deleteTransaction(id)
+    if (result.error) {
+      alert(result.error.message || 'Could not delete transaction.')
+      return
+    }
+    await loadDashboardData(user.id)
+  }
+
+  const resetBudgetForm = () => {
+    setBudgetForm({
+      category: 'Food',
+      limit_amount: '',
+      month: new Date().toISOString().slice(0, 7),
+    })
+    setEditingBudgetId(null)
+  }
+
+  const openEditBudget = (budget: any) => {
+    setBudgetForm({
+      category: budget.category || 'Food',
+      limit_amount: String(budget.limit_amount ?? budget.limit ?? ''),
+      month: String(budget.month || selectedMonth).slice(0, 7),
+    })
+    setEditingBudgetId(budget.id)
+    setShowBudgetModal(true)
+  }
+
+  const removeBudget = async (id: string) => {
+    if (!window.confirm('Delete this budget?')) return
+    const result = await deleteBudget(id)
+    if (result.error) {
+      alert(result.error.message || 'Could not delete budget.')
+      return
+    }
+    await loadDashboardData(user.id)
+  }
+
+  const openEditGoal = (goal: any) => {
+    setGoalForm({
+      name: goal.name || goal.title || '',
+      target_amount: String(goal.target_amount ?? ''),
+      current_amount: String(goal.current_amount ?? 0),
+      target_date: String(goal.target_date || '').slice(0, 10),
+      inflation_rate: String(goal.inflation_rate ?? 6),
+      return_rate: String(goal.return_rate ?? 8),
+      risk_profile: goal.risk_profile || 'Balanced',
+    })
+    setEditingGoalId(goal.id)
+    setGoalPlanMessage('')
+    setShowGoalModal(true)
+  }
+
+  const removeGoal = async (id: string) => {
+    if (!window.confirm('Delete this goal?')) return
+    const result = await deleteGoal(id)
+    if (result.error) {
+      alert(result.error.message || 'Could not delete goal.')
+      return
+    }
+    await loadDashboardData(user.id)
+  }
+
+  const openEditAsset = (asset: any) => {
+    setAssetForm({
+      name: asset.name || '',
+      type: asset.type || 'Other',
+      current_value: String(asset.current_value ?? ''),
+      purchase_value: String(asset.purchase_value ?? ''),
+      as_of_date: String(asset.as_of_date || '').slice(0, 10),
+      notes: asset.notes || '',
+    })
+    setEditingAssetId(asset.id)
+    setShowAssetModal(true)
+  }
+
+  const removeAsset = async (id: string) => {
+    if (!window.confirm('Delete this asset?')) return
+    const result = await deleteAsset(id)
+    if (result.error) {
+      alert(result.error.message || 'Could not delete asset.')
+      return
+    }
+    await loadDashboardData(user.id)
+  }
+
+  const openEditLiability = (item: any) => {
+    setLiabilityForm({
+      name: item.name || '',
+      type: item.type || 'Other',
+      outstanding_amount: String(item.outstanding_amount ?? ''),
+      original_amount: String(item.original_amount ?? ''),
+      interest_rate: String(item.interest_rate ?? ''),
+      monthly_payment: String(item.monthly_payment ?? ''),
+      credit_limit: String(item.credit_limit ?? ''),
+      as_of_date: String(item.as_of_date || '').slice(0, 10),
+      notes: item.notes || '',
+    })
+    setEditingLiabilityId(item.id)
+    setShowLiabilityModal(true)
+  }
+
+  const removeLiability = async (id: string) => {
+    if (!window.confirm('Delete this liability?')) return
+    const result = await deleteLiability(id)
+    if (result.error) {
+      alert(result.error.message || 'Could not delete liability.')
+      return
+    }
+    await loadDashboardData(user.id)
+  }
+
+  const openEditCredit = (profile: any) => {
+    setCreditForm({
+      report_date: String(profile.report_date || '').slice(0, 10),
+      cibil_score: String(profile.cibil_score ?? ''),
+      other_score_name: profile.other_score_name || '',
+      other_score: String(profile.other_score ?? ''),
+      late_payments_12m: String(profile.late_payments_12m ?? 0),
+      total_credit_limit: String(profile.total_credit_limit ?? ''),
+      total_credit_used: String(profile.total_credit_used ?? ''),
+      notes: profile.notes || '',
+    })
+    setEditingCreditId(profile.id)
+    setShowCreditModal(true)
+  }
+
+  const removeCredit = async (id: string) => {
+    if (!window.confirm('Delete this credit report entry?')) return
+    const result = await deleteCreditProfile(id)
+    if (result.error) {
+      alert(result.error.message || 'Could not delete credit report.')
+      return
+    }
+    await loadDashboardData(user.id)
+  }
+
+  const saveAsset = async () => {
+    if (!user || !assetForm.name.trim() || Number(assetForm.current_value) < 0) return
+    const payload = {
+      user_id: user.id,
+      name: assetForm.name.trim(),
+      type: assetForm.type,
+      current_value: Number(assetForm.current_value || 0),
+      purchase_value: assetForm.purchase_value ? Number(assetForm.purchase_value) : null,
+      as_of_date: assetForm.as_of_date,
+      notes: assetForm.notes.trim() || null,
+    }
+    const result = editingAssetId
+      ? await updateAsset(editingAssetId, payload)
+      : await addAsset(payload)
+    if (result.error) {
+      alert(result.error.message || 'Could not save asset.')
+      return
+    }
+    setShowAssetModal(false)
+    setEditingAssetId(null)
+    await loadDashboardData(user.id)
+  }
+
+  const saveLiability = async () => {
+    if (!user || !liabilityForm.name.trim() || Number(liabilityForm.outstanding_amount) < 0) return
+    const payload = {
+      user_id: user.id,
+      name: liabilityForm.name.trim(),
+      type: liabilityForm.type,
+      outstanding_amount: Number(liabilityForm.outstanding_amount || 0),
+      original_amount: liabilityForm.original_amount ? Number(liabilityForm.original_amount) : null,
+      interest_rate: liabilityForm.interest_rate ? Number(liabilityForm.interest_rate) : null,
+      monthly_payment: liabilityForm.monthly_payment ? Number(liabilityForm.monthly_payment) : null,
+      credit_limit: liabilityForm.credit_limit ? Number(liabilityForm.credit_limit) : null,
+      as_of_date: liabilityForm.as_of_date,
+      notes: liabilityForm.notes.trim() || null,
+    }
+    const result = editingLiabilityId
+      ? await updateLiability(editingLiabilityId, payload)
+      : await addLiability(payload)
+    if (result.error) {
+      alert(result.error.message || 'Could not save liability.')
+      return
+    }
+    setShowLiabilityModal(false)
+    setEditingLiabilityId(null)
+    await loadDashboardData(user.id)
+  }
+
+  const saveCreditProfile = async () => {
+    if (!user) return
+    const cibil = creditForm.cibil_score ? Number(creditForm.cibil_score) : null
+    if (cibil !== null && (cibil < 300 || cibil > 900)) {
+      alert('CIBIL score must be between 300 and 900.')
+      return
+    }
+    const payload = {
+      user_id: user.id,
+      report_date: creditForm.report_date,
+      cibil_score: cibil,
+      other_score_name: creditForm.other_score_name.trim() || null,
+      other_score: creditForm.other_score ? Number(creditForm.other_score) : null,
+      late_payments_12m: Number(creditForm.late_payments_12m || 0),
+      total_credit_limit: creditForm.total_credit_limit ? Number(creditForm.total_credit_limit) : null,
+      total_credit_used: creditForm.total_credit_used ? Number(creditForm.total_credit_used) : null,
+      notes: creditForm.notes.trim() || null,
+    }
+    const result = editingCreditId
+      ? await updateCreditProfile(editingCreditId, payload)
+      : await addCreditProfile(payload)
+    if (result.error) {
+      alert(result.error.message || 'Could not save credit profile.')
+      return
+    }
+    setShowCreditModal(false)
+    setEditingCreditId(null)
+    await loadDashboardData(user.id)
+  }
+
+  const importWorkbook = async (file: File) => {
+    if (!user) return
+    setImportMessage('Reading Excel workbook...')
+    try {
+      const buffer = await file.arrayBuffer()
+      const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
+      const rows = (sheet: string) => XLSX.utils.sheet_to_json<any>(workbook.Sheets[sheet] || {}, { defval: '' })
+
+      let imported = 0
+      const errors: string[] = []
+
+      for (const row of rows('Transactions')) {
+        const description = String(row.description || '').trim()
+        const amount = Number(row.amount)
+        if (!description || !Number.isFinite(amount) || amount <= 0) continue
+        const type = String(row.transaction_type || 'expense').toLowerCase() === 'income' ? 'income' : 'expense'
+        const result = await addTransaction({
+          user_id: user.id,
+          description,
+          amount,
+          transaction_type: type,
+          category: String(row.category || (type === 'income' ? 'Other Income' : 'Other Expense')),
+          date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date || new Date().toISOString().slice(0, 10)).slice(0, 10),
+        })
+        if (result.error) errors.push(`Transaction: ${result.error.message}`)
+        else imported++
+      }
+
+      for (const row of rows('Assets')) {
+        const name = String(row.asset_name || '').trim()
+        if (!name) continue
+        const result = await addAsset({
+          user_id: user.id,
+          name,
+          type: String(row.asset_type || 'Other'),
+          current_value: Number(row.current_value || 0),
+          purchase_value: row.purchase_value === '' ? null : Number(row.purchase_value),
+          as_of_date: row.as_of_date instanceof Date ? row.as_of_date.toISOString().slice(0, 10) : String(row.as_of_date || new Date().toISOString().slice(0, 10)).slice(0, 10),
+          notes: String(row.notes || '').trim() || null,
+        })
+        if (result.error) errors.push(`Asset: ${result.error.message}`)
+        else imported++
+      }
+
+      for (const row of rows('Liabilities')) {
+        const name = String(row.liability_name || '').trim()
+        if (!name) continue
+        const result = await addLiability({
+          user_id: user.id,
+          name,
+          type: String(row.liability_type || 'Other'),
+          outstanding_amount: Number(row.outstanding_amount || 0),
+          original_amount: row.original_amount === '' ? null : Number(row.original_amount),
+          interest_rate: row.interest_rate === '' ? null : Number(row.interest_rate),
+          monthly_payment: row.monthly_payment === '' ? null : Number(row.monthly_payment),
+          credit_limit: row.credit_limit === '' ? null : Number(row.credit_limit),
+          as_of_date: row.as_of_date instanceof Date ? row.as_of_date.toISOString().slice(0, 10) : String(row.as_of_date || new Date().toISOString().slice(0, 10)).slice(0, 10),
+          notes: String(row.notes || '').trim() || null,
+        })
+        if (result.error) errors.push(`Liability: ${result.error.message}`)
+        else imported++
+      }
+
+      const creditRows = rows('Credit_Profile')
+      for (const row of creditRows) {
+        const cibil = row.cibil_score === '' ? null : Number(row.cibil_score)
+        if (cibil !== null && (cibil < 300 || cibil > 900)) continue
+        const result = await addCreditProfile({
+          user_id: user.id,
+          report_date: row.report_date instanceof Date ? row.report_date.toISOString().slice(0, 10) : String(row.report_date || new Date().toISOString().slice(0, 10)).slice(0, 10),
+          cibil_score: cibil,
+          other_score_name: String(row.other_score_name || '').trim() || null,
+          other_score: row.other_score === '' ? null : Number(row.other_score),
+          late_payments_12m: Number(row.late_payments_12m || 0),
+          total_credit_limit: row.total_credit_limit === '' ? null : Number(row.total_credit_limit),
+          total_credit_used: row.total_credit_used === '' ? null : Number(row.total_credit_used),
+          notes: String(row.notes || '').trim() || null,
+        })
+        if (result.error) errors.push(`Credit: ${result.error.message}`)
+        else imported++
+      }
+
+      await loadDashboardData(user.id)
+      setImportMessage(errors.length ? `Imported ${imported} rows with some issues: ${errors.slice(0, 2).join(' | ')}` : `Successfully imported ${imported} rows.`)
+    } catch (error: any) {
+      setImportMessage(error?.message || 'Could not read this Excel workbook.')
+    }
+  }
+
   const submitTransaction = async () => {
     if (!user) return
 
