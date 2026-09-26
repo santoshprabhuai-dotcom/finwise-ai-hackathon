@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase, getTransactions, getBudgets } from '@/lib/supabase'
-import { FaHeart, FaArrowUp, FaArrowDow, FaWallet, FaPercent } from 'react-icons/fa'
+import { FaHeart, FaArrowUp, FaArrowDown, FaWallet, FaPercent } from 'react-icons/fa'
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
