@@ -700,7 +700,7 @@ ${spendingDNA
             <img
   src="/finwise-logo.png"
   alt="FinWise AI"
-  className="w-11 h-11 rounded-2xl object-cover"
+  className="w-14 h-14 rounded-2xl object-cover"
 />
 
             <div>
