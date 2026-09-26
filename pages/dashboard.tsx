@@ -1786,6 +1786,100 @@ ${spendingDNA
         </div>
       )}
 
+      {/* Add Budget Modal */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div
+            className={`w-full max-w-lg rounded-2xl border shadow-2xl p-6 ${card}`}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold">Add Budget</h2>
+                <p className={`text-sm ${muted}`}>
+                  Set a spending limit for a category.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowBudgetModal(false)}
+                className={`w-9 h-9 rounded-xl ${
+                  isDark ? 'bg-slate-700' : 'bg-gray-100'
+                } flex items-center justify-center`}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <select
+                value={budgetForm.category}
+                onChange={(e) =>
+                  setBudgetForm({
+                    ...budgetForm,
+                    category: e.target.value,
+                  })
+                }
+                className={`w-full px-4 py-3 rounded-xl border ${
+                  isDark
+                    ? 'bg-slate-900 border-slate-700'
+                    : 'bg-white border-gray-200'
+                }`}
+              >
+                <option>Food</option>
+                <option>Housing</option>
+                <option>Transportation</option>
+                <option>Shopping</option>
+                <option>Entertainment</option>
+                <option>Health</option>
+                <option>Education</option>
+                <option>Other</option>
+              </select>
+
+              <input
+                type="number"
+                value={budgetForm.limit_amount}
+                onChange={(e) =>
+                  setBudgetForm({
+                    ...budgetForm,
+                    limit_amount: e.target.value,
+                  })
+                }
+                placeholder="Budget amount"
+                className={`w-full px-4 py-3 rounded-xl border ${
+                  isDark
+                    ? 'bg-slate-900 border-slate-700'
+                    : 'bg-white border-gray-200'
+                }`}
+              />
+
+              <input
+                type="month"
+                value={budgetForm.month}
+                onChange={(e) =>
+                  setBudgetForm({
+                    ...budgetForm,
+                    month: e.target.value,
+                  })
+                }
+                className={`w-full px-4 py-3 rounded-xl border ${
+                  isDark
+                    ? 'bg-slate-900 border-slate-700'
+                    : 'bg-white border-gray-200'
+                }`}
+              />
+
+              <button
+                onClick={submitBudget}
+                className="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold"
+              >
+                Save Budget
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      
       {/* AI Coach Modal */}
       {showCoach && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
