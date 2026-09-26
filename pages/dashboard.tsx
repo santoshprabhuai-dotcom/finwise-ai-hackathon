@@ -32,6 +32,7 @@ import {
   FaTimes,
   FaPaperPlane,
   FaCheckCircle,
+  FaVolumeUp,
 } from 'react-icons/fa'
 
 import {
@@ -261,6 +262,22 @@ const [budgetForm, setBudgetForm] = useState({
     setTheme(value)
     window.localStorage.setItem('finwise-theme', value)
   }
+
+  const speakGuide = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+
+    window.speechSynthesis.cancel()
+
+    const utterance = new SpeechSynthesisUtterance(
+      'Plan with AI. Direct your future.'
+    )
+    utterance.rate = 0.95
+    utterance.pitch = 1.05
+    utterance.volume = 1
+
+    window.speechSynthesis.speak(utterance)
+  }
+
 
   const loadDashboardData = async (userId: string) => {
     setLoading(true)
@@ -1052,21 +1069,36 @@ ${spendingDNA
         </div>
       </aside>
 
-      {/* Walking FinWise AI Guide */}
-      <div className="fixed left-0 bottom-2 z-50 hidden lg:block pointer-events-none w-64">
+      {/* FinWise AI Robot Guide */}
+      <div className="fixed left-0 bottom-0 z-50 hidden lg:block w-64 h-64 pointer-events-none">
         <motion.div
-          animate={{ x: [0, 16, 0, -16, 0], y: [0, -4, 0, -4, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="relative"
+          animate={{ x: [0, 5, 0, -5, 0], y: [0, -3, 0, -3, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute inset-x-0 bottom-0 h-full"
         >
-          <div className="absolute -top-16 left-3 w-56 rounded-2xl bg-white text-slate-900 px-3 py-2 text-center text-xs font-bold shadow-xl border-2 border-teal-300">
-            Plan your financial future with me.
-            <div className="absolute left-8 -bottom-3 w-5 h-5 bg-white border-r-2 border-b-2 border-teal-300 rotate-45" />
+          <div className="absolute top-2 right-2 w-52 rounded-2xl bg-white text-slate-900 px-3 py-3 shadow-2xl border border-cyan-300">
+            <div className="flex items-start gap-2">
+              <div className="flex-1 text-xs font-extrabold leading-tight">
+                Plan with AI.<br />
+                <span className="text-blue-600">Direct your future.</span>
+              </div>
+              <button
+                type="button"
+                onClick={speakGuide}
+                className="pointer-events-auto shrink-0 w-8 h-8 rounded-full bg-slate-900 text-cyan-300 flex items-center justify-center hover:scale-105 transition"
+                title="Hear FinWise AI"
+                aria-label="Hear FinWise AI say Plan with AI. Direct your future."
+              >
+                <FaVolumeUp className="text-xs" />
+              </button>
+            </div>
+            <div className="absolute right-12 -bottom-2 w-4 h-4 bg-white border-r border-b border-cyan-300 rotate-45" />
           </div>
+
           <motion.img
             src="/finwise-guy.svg"
-            alt="FinWise AI guide"
-            className="w-28 h-auto drop-shadow-2xl"
+            alt="FinWise AI robot guide"
+            className="absolute left-5 bottom-0 w-36 h-auto drop-shadow-2xl"
             animate={{ rotate: [0, 1, 0, -1, 0] }}
             transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
           />
