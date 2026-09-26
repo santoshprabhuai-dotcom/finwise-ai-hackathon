@@ -35,8 +35,6 @@ import {
   FaVolumeUp,
   FaMicrophone,
   FaStop,
-  FaUserCircle,
-  FaChevronDown,
   FaExclamationTriangle,
   FaInfoCircle,
 } from 'react-icons/fa'
@@ -1128,6 +1126,21 @@ ${spendingDNA
     (item) => !readNotificationIds.includes(item.id)
   ).length
 
+  const markNotificationRead = (id: string) => {
+    setReadNotificationIds((current) => {
+      const next = current.includes(id) ? current : [...current, id]
+
+      if (typeof window !== 'undefined' && user?.id) {
+        window.localStorage.setItem(
+          `finwise-notifications-read-${user.id}`,
+          JSON.stringify(next)
+        )
+      }
+
+      return next
+    })
+  }
+
   const markAllNotificationsRead = () => {
     const ids = notificationItems.map((item) => item.id)
     setReadNotificationIds(ids)
@@ -1140,10 +1153,10 @@ ${spendingDNA
     }
   }
 
-  const saveProfilePhotoUrl = async () => {
+  const saveProfilePhotoUrl = async (urlOverride?: string) => {
     if (!user) return
 
-    const url = avatarInput.trim()
+    const url = (urlOverride ?? avatarInput).trim()
 
     if (url && !/^https?:\\/\\//i.test(url)) {
       setAvatarMessage('Please enter a valid image URL beginning with https://')
@@ -1489,11 +1502,7 @@ ${spendingDNA
                             key={item.id}
                             type="button"
                             onClick={() => {
-                              setReadNotificationIds((current) =>
-                                current.includes(item.id)
-                                  ? current
-                                  : [...current, item.id]
-                              )
+                              markNotificationRead(item.id)
                             }}
                             className={`w-full text-left px-4 py-3 border-b last:border-b-0 transition ${
                               isDark
@@ -1620,7 +1629,7 @@ ${spendingDNA
                           type="button"
                           onClick={() => {
                             setAvatarInput('')
-                            saveProfilePhotoUrl()
+                            saveProfilePhotoUrl('')
                           }}
                           className={`w-full py-2.5 rounded-xl border text-sm font-semibold ${
                             isDark ? 'border-slate-700 hover:bg-slate-800' : 'border-gray-200 hover:bg-gray-50'
