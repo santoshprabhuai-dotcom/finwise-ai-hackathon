@@ -718,6 +718,10 @@ const [budgetForm, setBudgetForm] = useState({
       icon: <FaBullseye />,
     },
     {
+      label: 'Financial Position',
+      icon: <FaLandmark />,
+    },
+    {
       label: 'Net Worth',
       icon: <FaBalanceScale />,
     },
@@ -2916,6 +2920,156 @@ ${spendingDNA
                   })}
                 </div>
               )}
+            </section>
+          )}
+
+          {/* FINANCIAL POSITION */}
+          {activeTab === 'Financial Position' && (
+            <section>
+              <div className="mb-7">
+                <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center">
+                        <FaLandmark />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold">Financial Position</h2>
+                        <p className={'text-sm ' + muted}>
+                          A professional snapshot of what you own, what you owe and your reported credit position.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => setShowAssetModal(true)} className="px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-semibold flex items-center gap-2"><FaPlus /> Asset</button>
+                    <button type="button" onClick={() => setShowLiabilityModal(true)} className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold flex items-center gap-2"><FaPlus /> Liability</button>
+                    <button type="button" onClick={() => setShowCreditModal(true)} className="px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold flex items-center gap-2"><FaPlus /> Credit Report</button>
+                    <button type="button" onClick={() => setShowImportModal(true)} className="px-4 py-2.5 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-semibold flex items-center gap-2"><FaUpload /> Excel</button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                <div className={card + " rounded-2xl border p-5"}>
+                  <div className="flex items-center justify-between"><p className={'text-sm font-semibold ' + muted}>Net Worth</p><FaBalanceScale className="text-blue-500" /></div>
+                  <p className="text-3xl font-black mt-3">{money(netWorth)}</p>
+                  <p className={'text-xs mt-2 ' + muted}>Assets minus liabilities</p>
+                </div>
+                <div className={card + " rounded-2xl border p-5"}>
+                  <div className="flex items-center justify-between"><p className={'text-sm font-semibold ' + muted}>Total Assets</p><FaArrowUp className="text-emerald-500" /></div>
+                  <p className="text-3xl font-black text-emerald-500 mt-3">{money(totalAssets)}</p>
+                  <p className={'text-xs mt-2 ' + muted}>{assets.length} recorded asset{assets.length === 1 ? '' : 's'}</p>
+                </div>
+                <div className={card + " rounded-2xl border p-5"}>
+                  <div className="flex items-center justify-between"><p className={'text-sm font-semibold ' + muted}>Total Liabilities</p><FaArrowDown className="text-red-500" /></div>
+                  <p className="text-3xl font-black text-red-500 mt-3">{money(totalLiabilities)}</p>
+                  <p className={'text-xs mt-2 ' + muted}>{liabilities.length} recorded liability{liabilities.length === 1 ? '' : 'ies'}</p>
+                </div>
+                <div className={card + " rounded-2xl border p-5"}>
+                  <div className="flex items-center justify-between"><p className={'text-sm font-semibold ' + muted}>Reported CIBIL</p><FaCreditCard className="text-cyan-500" /></div>
+                  <p className="text-3xl font-black mt-3">{latestCredit?.cibil_score ?? '—'}</p>
+                  <p className={'text-xs mt-2 ' + muted}>{latestCredit?.report_date ? 'Report date: ' + dateLabel(latestCredit.report_date) : 'Add your latest bureau report'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+                <div className={card + " rounded-2xl border p-6 xl:col-span-2"}>
+                  <div className="flex items-center justify-between mb-5">
+                    <div><h3 className="text-lg font-bold">Balance Sheet View</h3><p className={'text-sm mt-1 ' + muted}>Current recorded financial position</p></div>
+                    <button type="button" onClick={() => goTab('Net Worth')} className="text-sm font-semibold text-blue-500 hover:underline">Manage details</button>
+                  </div>
+                  <div className="space-y-5">
+                    <div>
+                      <div className="flex items-center justify-between text-sm mb-2"><span className="font-semibold">Assets</span><span className="font-bold text-emerald-500">{money(totalAssets)}</span></div>
+                      <div className={'h-3 rounded-full ' + (isDark ? 'bg-slate-700' : 'bg-gray-100')}><div className="h-3 rounded-full bg-emerald-500" style={{ width: ((totalAssets + totalLiabilities > 0 ? totalAssets / (totalAssets + totalLiabilities) : 0) * 100) + '%' }} /></div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between text-sm mb-2"><span className="font-semibold">Liabilities</span><span className="font-bold text-red-500">{money(totalLiabilities)}</span></div>
+                      <div className={'h-3 rounded-full ' + (isDark ? 'bg-slate-700' : 'bg-gray-100')}><div className="h-3 rounded-full bg-red-500" style={{ width: ((totalAssets + totalLiabilities > 0 ? totalLiabilities / (totalAssets + totalLiabilities) : 0) * 100) + '%' }} /></div>
+                    </div>
+                    <div className={'rounded-2xl p-4 ' + (isDark ? 'bg-slate-900' : 'bg-slate-50')}>
+                      <div className="flex items-center justify-between gap-4">
+                        <div><p className={'text-xs font-semibold uppercase tracking-wide ' + muted}>Net position</p><p className="text-xl font-black mt-1">{money(netWorth)}</p></div>
+                        <div className="text-right"><p className={'text-xs ' + muted}>Liabilities / Assets</p><p className="font-bold">{totalAssets > 0 ? Math.round((totalLiabilities / totalAssets) * 100) + '%' : '—'}</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={card + " rounded-2xl border p-6"}>
+                  <div className="flex items-center justify-between mb-5">
+                    <div><h3 className="text-lg font-bold">Credit Snapshot</h3><p className={'text-sm mt-1 ' + muted}>Reported data + FinWise planning view</p></div>
+                    <FaCreditCard className="text-cyan-500" />
+                  </div>
+                  <div className="rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 p-5">
+                    <p className={'text-xs font-semibold uppercase tracking-wide ' + muted}>CIBIL Score</p>
+                    <p className="text-5xl font-black mt-2">{latestCredit?.cibil_score ?? '—'}</p>
+                    <p className={'text-xs mt-2 ' + muted}>Official score entered from your credit report</p>
+                  </div>
+                  <div className="mt-5 space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between text-sm"><span className="font-semibold">Credit utilization</span><span className="font-bold">{latestCredit?.total_credit_limit ? Math.round(creditUtilization) + '%' : '—'}</span></div>
+                      <div className={'mt-2 h-2.5 rounded-full ' + (isDark ? 'bg-slate-700' : 'bg-gray-100')}><div className="h-2.5 rounded-full bg-cyan-500" style={{ width: Math.min(Math.max(creditUtilization, 0), 100) + '%' }} /></div>
+                    </div>
+                    <div className="flex items-center justify-between"><span className={muted}>Late payments, 12 months</span><span className="font-bold">{latestCredit?.late_payments_12m ?? '—'}</span></div>
+                    <div className="flex items-center justify-between"><span className={muted}>FinWise Credit Health</span><span className="font-bold text-cyan-500">{finwiseCreditHealth}/100</span></div>
+                    {latestCredit?.other_score_name && (<div className="flex items-center justify-between"><span className={muted}>{latestCredit.other_score_name}</span><span className="font-bold">{latestCredit.other_score ?? '—'}</span></div>)}
+                    <p className={'text-[11px] leading-5 ' + muted}>CIBIL is a reported bureau score. The FinWise figure is a separate planning indicator and is not a CIBIL or lender score.</p>
+                  </div>
+                  <button type="button" onClick={() => goTab('Credit Health')} className="mt-5 w-full py-2.5 rounded-xl border border-cyan-500/30 text-cyan-600 font-semibold">View credit history</button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className={card + " rounded-2xl border p-6"}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div><h3 className="text-lg font-bold">Top Assets</h3><p className={'text-sm mt-1 ' + muted}>Largest recorded values</p></div>
+                    <button type="button" onClick={() => setShowAssetModal(true)} className="text-sm font-semibold text-teal-500">+ Add</button>
+                  </div>
+                  {assets.length === 0 ? (
+                    <div className={'py-8 text-center ' + muted}>Add your savings, investments, property or other assets.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {[...assets].sort((a, b) => Number(b.current_value || 0) - Number(a.current_value || 0)).slice(0, 5).map((asset) => (
+                        <div key={asset.id} className={'flex items-center justify-between gap-3 py-2 border-b last:border-b-0 ' + (isDark ? 'border-slate-700' : 'border-gray-100')}>
+                          <div className="min-w-0"><p className="font-semibold truncate">{asset.name}</p><p className={'text-xs ' + muted}>{asset.type} • {dateLabel(asset.as_of_date)}</p></div>
+                          <p className="font-bold text-emerald-500 shrink-0">{money(Number(asset.current_value || 0))}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className={card + " rounded-2xl border p-6"}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div><h3 className="text-lg font-bold">Key Liabilities</h3><p className={'text-sm mt-1 ' + muted}>Largest outstanding balances</p></div>
+                    <button type="button" onClick={() => setShowLiabilityModal(true)} className="text-sm font-semibold text-orange-500">+ Add</button>
+                  </div>
+                  {liabilities.length === 0 ? (
+                    <div className={'py-8 text-center ' + muted}>Add loans, credit cards or other outstanding obligations.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {[...liabilities].sort((a, b) => Number(b.outstanding_amount || 0) - Number(a.outstanding_amount || 0)).slice(0, 5).map((item) => (
+                        <div key={item.id} className={'flex items-center justify-between gap-3 py-2 border-b last:border-b-0 ' + (isDark ? 'border-slate-700' : 'border-gray-100')}>
+                          <div className="min-w-0"><p className="font-semibold truncate">{item.name}</p><p className={'text-xs ' + muted}>{item.type} • {dateLabel(item.as_of_date)}</p></div>
+                          <p className="font-bold text-red-500 shrink-0">{money(Number(item.outstanding_amount || 0))}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className={'mt-6 rounded-2xl border p-5 ' + (isDark ? 'bg-slate-900 border-slate-700' : 'bg-amber-50 border-amber-100')}>
+                <div className="flex items-start gap-3">
+                  <FaInfoCircle className="text-amber-500 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-bold">Data clarity</p>
+                    <p className={'mt-1 ' + muted}>FinWise calculates net worth from the assets and liabilities you enter. Your CIBIL score is stored as reported from your bureau report; FinWise does not recreate the bureau's proprietary score.</p>
+                  </div>
+                </div>
+              </div>
             </section>
           )}
 
