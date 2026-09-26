@@ -3066,7 +3066,7 @@ ${spendingDNA
                   <FaInfoCircle className="text-amber-500 mt-0.5 shrink-0" />
                   <div className="text-sm">
                     <p className="font-bold">Data clarity</p>
-                    <p className={'mt-1 ' + muted}>FinWise calculates net worth from the assets and liabilities you enter. Your CIBIL score is stored as reported from your bureau report; FinWise does not recreate the bureau's proprietary score.</p>
+                    <p className={'mt-1 ' + muted}>FinWise calculates net worth from the assets and liabilities you enter. Your CIBIL score is stored as reported from your bureau report; FinWise does not recreate the bureau&apos;s proprietary score.</p>
                   </div>
                 </div>
               </div>
