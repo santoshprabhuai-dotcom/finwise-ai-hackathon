@@ -449,7 +449,39 @@ const [budgetForm, setBudgetForm] = useState({
 
     await loadDashboardData(user.id)
   }
+  const submitBudget = async () => {
+    if (!user) return
 
+    if (!budgetForm.limit_amount) {
+      alert('Please enter a budget amount.')
+      return
+    }
+
+    const result = await addBudget({
+      user_id: user.id,
+      category: budgetForm.category,
+      limit_amount: Number(budgetForm.limit_amount),
+      month: `${budgetForm.month}-01`,
+      spent_amount: 0,
+      is_active: true,
+    })
+
+    if (result.error) {
+      alert(result.error.message || 'Could not save budget.')
+      return
+    }
+
+    setBudgetForm({
+      category: 'Food',
+      limit_amount: '',
+      month: new Date().toISOString().slice(0, 7),
+    })
+
+    setShowBudgetModal(false)
+
+    await loadDashboardData(user.id)
+  }
+  
   const askCoach = async () => {
     if (!coachInput.trim() || coachLoading) return
 
