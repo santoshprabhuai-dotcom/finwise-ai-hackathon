@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 360" role="img" aria-labelledby="title desc">
+  <title id="title">FinWise AI financial guide robot</title>
+  <desc id="desc">Friendly white and blue AI robot mascot holding a financial tablet.</desc>
+  <style>
+    .speak-eye {
+      animation: blink 2.8s infinite ease-in-out;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .speak-mouth {
+      animation: mouth 0.42s infinite ease-in-out;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .speak-arm-left {
+      animation: wave-left 1.2s infinite ease-in-out;
+      transform-box: fill-box;
+      transform-origin: 66px 130px;
+    }
+    .speak-arm-right {
+      animation: wave-right 1.5s infinite ease-in-out;
+      transform-box: fill-box;
+      transform-origin: 154px 132px;
+    }
+    @keyframes blink {
+      0%, 44%, 48%, 100% { transform: scaleY(1); }
+      46% { transform: scaleY(0.15); }
+    }
+    @keyframes mouth {
+      0%, 100% { transform: scaleY(0.35); opacity: 0.75; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+    @keyframes wave-left {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-7deg); }
+    }
+    @keyframes wave-right {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(5deg); }
+    }
+  </style>
+
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffffff"/><stop offset=".55" stop-color="#e2e8f0"/><stop offset="1" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#334155"/><stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#22d3ee"/><stop offset=".5" stop-color="#3b82f6"/><stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <ellipse cx="108" cy="346" rx="72" ry="9" fill="#22d3ee" opacity=".18" filter="url(#glow)"/>
+
+  <!-- head -->
+  <rect x="49" y="20" width="122" height="88" rx="34" fill="url(#body)" stroke="#94a3b8" stroke-width="2"/>
+  <rect x="61" y="34" width="98" height="60" rx="24" fill="#07111f"/>
+  <path class="speak-eye" d="M78 61 Q88 49 98 61" fill="none" stroke="#22d3ee" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>
+  <path class="speak-eye" d="M122 61 Q132 49 142 61" fill="none" stroke="#22d3ee" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M91 75 Q110 90 129 75" opacity=".35" fill="none" stroke="#22d3ee" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>
+  <circle cx="48" cy="63" r="17" fill="#172033" stroke="#22d3ee" stroke-width="4"/>
+  <circle cx="172" cy="63" r="17" fill="#172033" stroke="#22d3ee" stroke-width="4"/>
+  <circle cx="48" cy="63" r="7" fill="#22d3ee" opacity=".8" filter="url(#glow)"/>
+  <circle cx="172" cy="63" r="7" fill="#22d3ee" opacity=".8" filter="url(#glow)"/>
+  <ellipse class="speak-mouth" cx="110" cy="78" rx="15" ry="7" fill="#22d3ee" filter="url(#glow)"/>
+
+  <!-- neck -->
+  <rect x="91" y="103" width="34" height="17" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="3"/>
+
+  <!-- torso -->
+  <path d="M63 119 Q110 104 157 119 L169 204 Q110 228 51 204Z" fill="url(#body)" stroke="#94a3b8" stroke-width="2"/>
+  <path d="M79 130 Q110 119 141 130 L145 188 Q110 199 75 188Z" fill="#f8fafc" stroke="#cbd5e1"/>
+  <circle cx="110" cy="151" r="20" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <path d="M100 158 L100 145 L110 151 L120 141 L120 158" fill="none" stroke="#2563eb" stroke-width="4" stroke-linejoin="round"/>
+  <text x="110" y="177" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="800" fill="#0f172a">FinWise AI</text>
+
+  <!-- left arm reaching out -->
+  <path class="speak-arm-left" d="M66 130 Q42 143 28 174" fill="none" stroke="url(#body)" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="27" cy="176" r="13" fill="url(#body)" stroke="#94a3b8" stroke-width="2"/>
+  <path class="speak-arm-left" d="M18 177 l-14 -7 M18 181 l-16 2 M21 186 l-13 10" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- right arm + tablet -->
+  <path class="speak-arm-right" d="M154 132 Q177 147 180 174" fill="none" stroke="url(#body)" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="181" cy="177" r="13" fill="url(#body)" stroke="#94a3b8" stroke-width="2"/>
+  <rect x="155" y="164" width="55" height="76" rx="7" fill="url(#dark)" stroke="#60a5fa" stroke-width="2" transform="rotate(8 182 202)"/>
+  <path d="M168 216 L168 198 L177 204 L187 188 L198 198 L198 216Z" fill="none" stroke="#22d3ee" stroke-width="4" stroke-linejoin="round" filter="url(#glow)"/>
+  <circle cx="183" cy="227" r="2.5" fill="#22d3ee"/>
+
+  <!-- hips -->
+  <path d="M73 200 Q110 216 147 200 L153 222 Q110 239 67 222Z" fill="url(#dark)"/>
+  <rect x="99" y="207" width="22" height="10" rx="5" fill="#22d3ee" filter="url(#glow)"/>
+
+  <!-- legs walking -->
+  <path d="M82 218 Q74 252 91 282 L84 320" fill="none" stroke="url(#body)" stroke-width="28" stroke-linecap="round"/>
+  <path d="M135 218 Q145 249 127 278 L141 315" fill="none" stroke="url(#body)" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="89" cy="280" r="13" fill="#0f172a" stroke="#22d3ee" stroke-width="3"/>
+  <circle cx="128" cy="277" r="13" fill="#0f172a" stroke="#22d3ee" stroke-width="3"/>
+  <path d="M84 316 Q67 322 51 333" fill="none" stroke="url(#body)" stroke-width="19" stroke-linecap="round"/>
+  <path d="M139 312 Q155 321 171 329" fill="none" stroke="url(#body)" stroke-width="19" stroke-linecap="round"/>
+  <path d="M50 333 Q67 339 83 333" fill="none" stroke="#22d3ee" stroke-width="6" stroke-linecap="round"/>
+  <path d="M170 329 Q154 336 139 330" fill="none" stroke="#22d3ee" stroke-width="6" stroke-linecap="round"/>
+</svg>
