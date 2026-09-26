@@ -2546,7 +2546,10 @@ ${spendingDNA
                 </div>
 
                 <button
-                  onClick={() => setShowTransactionModal(true)}
+                  onClick={() => {
+                    resetTransactionForm()
+                    setShowTransactionModal(true)
+                  }}
                   className="px-4 py-3 rounded-xl bg-teal-500 text-white font-semibold flex items-center gap-2"
                 >
                   <FaPlus />
@@ -2738,7 +2741,10 @@ ${spendingDNA
   </div>
 
   <button
-    onClick={() => setShowBudgetModal(true)}
+    onClick={() => {
+      resetBudgetForm()
+      setShowBudgetModal(true)
+    }}
     className="px-4 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold flex items-center gap-2"
   >
     <FaPlus />
@@ -2823,7 +2829,11 @@ ${spendingDNA
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowGoalModal(true)}
+                  onClick={() => {
+                    setEditingGoalId(null)
+                    setGoalPlanMessage('')
+                    setShowGoalModal(true)
+                  }}
                   className="px-4 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold flex items-center gap-2"
                 >
                   <FaPlus />
@@ -3089,7 +3099,7 @@ ${spendingDNA
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-bold">
-                  Add Transaction
+                  {editingTransactionId ? 'Edit Transaction' : 'Add Transaction'}
                 </h2>
                 <p className={`text-sm ${muted}`}>
                   Add income or an expense.
@@ -3238,7 +3248,7 @@ ${spendingDNA
           <div className={`w-full max-w-lg rounded-2xl border shadow-2xl p-6 ${card}`}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-xl font-bold">AI Goal Planner</h2>
+                <h2 className="text-xl font-bold">{editingGoalId ? 'Edit Goal' : 'AI Goal Planner'}</h2>
                 <p className={`text-sm ${muted}`}>Set a realistic target and let FinWise calculate the saving pace.</p>
               </div>
               <button onClick={() => setShowGoalModal(false)} className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center"><FaTimes /></button>
@@ -3348,7 +3358,7 @@ ${spendingDNA
                   onClick={submitGoal}
                   className="py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold"
                 >
-                  Save Goal
+                  {editingGoalId ? 'Update Goal' : 'Save Goal'}
                 </button>
               </div>
             </div>
@@ -3364,7 +3374,7 @@ ${spendingDNA
           >
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold">Add Budget</h2>
+                <h2 className="text-xl font-bold">{editingBudgetId ? 'Edit Budget' : 'Add Budget'}</h2>
                 <p className={`text-sm ${muted}`}>
                   Set a spending limit for a category.
                 </p>
@@ -3442,7 +3452,7 @@ ${spendingDNA
                 onClick={submitBudget}
                 className="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold"
               >
-                Save Budget
+                {editingBudgetId ? 'Update Budget' : 'Save Budget'}
               </button>
             </div>
           </div>
