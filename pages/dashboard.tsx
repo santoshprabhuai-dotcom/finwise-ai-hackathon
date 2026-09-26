@@ -355,7 +355,7 @@ export default function Dashboard() {
       const category = budget.category || 'Other'
 
       const limit = Number(
-        budget.amount ?? budget.limit ?? budget.budget_amount ?? 0
+        budget.limit_amount ?? budget.amount ?? budget.limit ?? budget.budget_amount ?? 0
       )
 
       const spent = monthTransactions
