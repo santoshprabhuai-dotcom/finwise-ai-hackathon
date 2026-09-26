@@ -97,6 +97,14 @@ export default function Dashboard() {
   const [showTransactionModal, setShowTransactionModal] = useState(false)
   const [showCoach, setShowCoach] = useState(false)
 
+const [showBudgetModal, setShowBudgetModal] = useState(false)
+
+const [budgetForm, setBudgetForm] = useState({
+  category: 'Food',
+  limit_amount: '',
+  month: new Date().toISOString().slice(0, 7),
+})
+  
   const [transactionForm, setTransactionForm] = useState({
     description: '',
     amount: '',
