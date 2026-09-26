@@ -196,6 +196,9 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<any[]>([])
   const [budgets, setBudgets] = useState<any[]>([])
   const [goals, setGoals] = useState<any[]>([])
+  const [assets, setAssets] = useState<any[]>([])
+  const [liabilities, setLiabilities] = useState<any[]>([])
+  const [creditProfiles, setCreditProfiles] = useState<any[]>([])
 
   const [loading, setLoading] = useState(true)
 
@@ -209,6 +212,17 @@ export default function Dashboard() {
   const [showTransactionModal, setShowTransactionModal] = useState(false)
   const [showCoach, setShowCoach] = useState(false)
   const [showGoalModal, setShowGoalModal] = useState(false)
+  const [showAssetModal, setShowAssetModal] = useState(false)
+  const [showLiabilityModal, setShowLiabilityModal] = useState(false)
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null)
+  const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null)
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
+  const [editingAssetId, setEditingAssetId] = useState<string | null>(null)
+  const [editingLiabilityId, setEditingLiabilityId] = useState<string | null>(null)
+  const [editingCreditId, setEditingCreditId] = useState<string | null>(null)
+  const [importMessage, setImportMessage] = useState('')
   const [goalPlanLoading, setGoalPlanLoading] = useState(false)
   const [goalPlanMessage, setGoalPlanMessage] = useState('')
 
@@ -229,6 +243,38 @@ const [budgetForm, setBudgetForm] = useState({
   limit_amount: '',
   month: new Date().toISOString().slice(0, 7),
 })
+
+  const [assetForm, setAssetForm] = useState({
+    name: '',
+    type: 'Savings / Cash',
+    current_value: '',
+    purchase_value: '',
+    as_of_date: new Date().toISOString().slice(0, 10),
+    notes: '',
+  })
+
+  const [liabilityForm, setLiabilityForm] = useState({
+    name: '',
+    type: 'Home Loan',
+    outstanding_amount: '',
+    original_amount: '',
+    interest_rate: '',
+    monthly_payment: '',
+    credit_limit: '',
+    as_of_date: new Date().toISOString().slice(0, 10),
+    notes: '',
+  })
+
+  const [creditForm, setCreditForm] = useState({
+    report_date: new Date().toISOString().slice(0, 10),
+    cibil_score: '',
+    other_score_name: '',
+    other_score: '',
+    late_payments_12m: '0',
+    total_credit_limit: '',
+    total_credit_used: '',
+    notes: '',
+  })
   
   const [transactionForm, setTransactionForm] = useState({
     description: '',
@@ -387,15 +433,28 @@ const [budgetForm, setBudgetForm] = useState({
   const loadDashboardData = async (userId: string) => {
     setLoading(true)
 
-    const [txResult, budgetResult, goalResult] = await Promise.all([
+    const [
+      txResult,
+      budgetResult,
+      goalResult,
+      assetResult,
+      liabilityResult,
+      creditResult,
+    ] = await Promise.all([
       getTransactions(userId),
       getBudgets(userId),
       getGoals(userId),
+      getAssets(userId),
+      getLiabilities(userId),
+      getCreditProfiles(userId),
     ])
 
     setTransactions(txResult.data || [])
     setBudgets(budgetResult.data || [])
     setGoals(goalResult.data || [])
+    setAssets(assetResult.data || [])
+    setLiabilities(liabilityResult.data || [])
+    setCreditProfiles(creditResult.data || [])
 
     setLoading(false)
   }
