@@ -885,13 +885,21 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       return
     }
 
-    const result = await addGoal({
+    const payload = {
       user_id: user.id,
       title: name,
       name,
       target_amount: target,
       current_amount: current,
-    })
+      target_date: goalForm.target_date || null,
+      inflation_rate: Number(goalForm.inflation_rate || 6),
+      return_rate: Number(goalForm.return_rate || 8),
+      risk_profile: goalForm.risk_profile,
+    }
+
+    const result = editingGoalId
+      ? await updateGoal(editingGoalId, payload)
+      : await addGoal(payload)
 
     if (result.error) {
       alert(result.error.message || 'Could not save goal.')
@@ -907,6 +915,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       return_rate: '8',
       risk_profile: 'Balanced',
     })
+    setEditingGoalId(null)
     setGoalPlanMessage('')
     setShowGoalModal(false)
     await loadDashboardData(user.id)
@@ -1258,32 +1267,29 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       ? transactionForm.category
       : ruleBasedCategory(description, transactionForm.transaction_type)
 
-    const result = await addTransaction({
+    const payload = {
       user_id: user.id,
       description,
       amount,
       transaction_type: transactionForm.transaction_type,
       category,
       date: transactionForm.date,
-    })
+    }
+
+    const result = editingTransactionId
+      ? await updateTransaction(editingTransactionId, payload)
+      : await addTransaction(payload)
 
     if (result.error) {
       alert(result.error.message || 'Could not save transaction.')
       return
     }
 
-    setTransactionForm({
-      description: '',
-      amount: '',
-      transaction_type: 'expense',
-      category: 'Other Expense',
-      date: new Date().toISOString().split('T')[0],
-    })
-
+    resetTransactionForm()
     setShowTransactionModal(false)
-
     await loadDashboardData(user.id)
   }
+
   const submitBudget = async () => {
     if (!user) return
 
@@ -1292,31 +1298,29 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       return
     }
 
-    const result = await addBudget({
+    const payload = {
       user_id: user.id,
       category: budgetForm.category,
       limit_amount: Number(budgetForm.limit_amount),
       month: `${budgetForm.month}-01`,
       spent_amount: 0,
       is_active: true,
-    })
+    }
+
+    const result = editingBudgetId
+      ? await updateBudget(editingBudgetId, payload)
+      : await addBudget(payload)
 
     if (result.error) {
       alert(result.error.message || 'Could not save budget.')
       return
     }
 
-    setBudgetForm({
-      category: 'Food',
-      limit_amount: '',
-      month: new Date().toISOString().slice(0, 7),
-    })
-
+    resetBudgetForm()
     setShowBudgetModal(false)
-
     await loadDashboardData(user.id)
   }
-  
+
   const askCoach = async (inputOverride?: string) => {
     const userMessage = (inputOverride ?? coachInput).trim()
 
