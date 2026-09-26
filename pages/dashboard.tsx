@@ -697,11 +697,13 @@ ${spendingDNA
       >
         <div className="p-6 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <img
-  src="/finwise-logo.png"
-  alt="FinWise AI"
-  className="w-14 h-14 rounded-2xl object-cover"
-/>
+            <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-slate-950 flex items-center justify-center">
+  <img
+    src="/finwise-logo.png"
+    alt="FinWise AI"
+    className="w-full h-full object-contain"
+  />
+</div>
 
             <div>
               <div className="font-bold text-xl">FinWise AI</div>
