@@ -42,6 +42,7 @@ import {
   getGoals,
   addTransaction,
   addBudget,
+  addGoal,
   signOut,
 } from '@/lib/supabase'
 
