@@ -901,7 +901,7 @@ ${spendingDNA
       </aside>
 
       {/* Walking FinWise AI Guide */}
-      <div className="fixed left-2 bottom-14 z-30 hidden lg:block pointer-events-none">
+      <div className="fixed left-[270px] bottom-8 z-50 hidden lg:block pointer-events-none">
         <motion.div
           animate={{ x: [0, 16, 0, -16, 0], y: [0, -4, 0, -4, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
