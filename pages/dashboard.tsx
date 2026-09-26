@@ -1618,7 +1618,7 @@ ${spendingDNA
 
                       <button
                         type="button"
-                        onClick={saveProfilePhotoUrl}
+                        onClick={() => saveProfilePhotoUrl()}
                         className="w-full py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-bold hover:bg-cyan-600"
                       >
                         Save profile photo
