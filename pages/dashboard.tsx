@@ -34,6 +34,11 @@ import {
   FaCheckCircle,
   FaVolumeUp,
   FaMicrophone,
+  FaStop,
+  FaUserCircle,
+  FaChevronDown,
+  FaExclamationTriangle,
+  FaInfoCircle,
 } from 'react-icons/fa'
 
 import {
@@ -216,6 +221,12 @@ const [budgetForm, setBudgetForm] = useState({
   const [coachInput, setCoachInput] = useState('')
   const [coachLoading, setCoachLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [avatarInput, setAvatarInput] = useState('')
+  const [avatarMessage, setAvatarMessage] = useState('')
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>([])
 
   const [insights, setInsights] = useState<string[]>([])
   const [insightsLoading, setInsightsLoading] = useState(false)
@@ -270,17 +281,40 @@ const [budgetForm, setBudgetForm] = useState({
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
 
     window.speechSynthesis.cancel()
+    setIsSpeaking(true)
 
     const utterance = new SpeechSynthesisUtterance(message)
     utterance.rate = 0.95
     utterance.pitch = 1.05
     utterance.volume = 1
+    utterance.lang = 'en-IN'
+
+    utterance.onstart = () => setIsSpeaking(true)
+    utterance.onend = () => setIsSpeaking(false)
+    utterance.onerror = () => setIsSpeaking(false)
 
     window.speechSynthesis.speak(utterance)
   }
 
-  const speakGuide = () => {
+  const stopSpeaking = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    setIsSpeaking(false)
+  }
+
+  const toggleGuideSpeech = () => {
+    if (isSpeaking) {
+      stopSpeaking()
+      window.localStorage.setItem('finwise-voice-enabled', 'false')
+      return
+    }
+
+    window.localStorage.setItem('finwise-voice-enabled', 'true')
     speakText('Plan with AI. Direct your future.')
+  }
+
+  const speakGuide = () => {
+    toggleGuideSpeech()
   }
 
   const startVoiceInput = () => {
@@ -296,7 +330,7 @@ const [budgetForm, setBudgetForm] = useState({
     }
 
     const recognition = new SpeechRecognition()
-    recognition.lang = 'en-US'
+    recognition.lang = 'en-IN'
     recognition.continuous = false
     recognition.interimResults = false
     recognition.maxAlternatives = 1
@@ -1034,6 +1068,167 @@ ${spendingDNA
     }
   }
 
+  const profileAvatar =
+    user?.user_metadata?.profile_photo_url ||
+    user?.user_metadata?.avatar_url ||
+    user?.user_metadata?.picture ||
+    user?.user_metadata?.picture_url ||
+    ''
+
+  const profileName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split('@')[0] ||
+    'FinWise User'
+
+  const notificationItems = useMemo(() => {
+    const items: Array<{
+      id: string
+      title: string
+      message: string
+      tone: 'warning' | 'info'
+    }> = []
+
+    budgetRows
+      .filter((budget) => budget.limit > 0 && budget.percentage >= 80)
+      .forEach((budget) => {
+        const id = `budget-${budget.id || budget.category}-${selectedMonth}`
+        items.push({
+          id,
+          title: budget.percentage >= 100 ? 'Budget limit reached' : 'Budget almost full',
+          message: `${budget.category} is at ${Math.round(budget.percentage)}% of your ${monthLabel(selectedMonth)} budget.`,
+          tone: 'warning',
+        })
+      })
+
+    goals.forEach((goal) => {
+      if (!goal?.target_date) return
+
+      const targetDate = new Date(goal.target_date)
+      const days = Math.ceil(
+        (targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+
+      if (days >= 0 && days <= 90) {
+        const goalName = goal.name || goal.title || 'Your goal'
+        const id = `goal-${goal.id || goalName}-due`
+        items.push({
+          id,
+          title: 'Goal deadline approaching',
+          message: `${goalName} is due in ${days} day${days === 1 ? '' : 's'}.`,
+          tone: 'info',
+        })
+      }
+    })
+
+    return items.slice(0, 8)
+  }, [budgetRows, goals, selectedMonth])
+
+  const unreadNotificationCount = notificationItems.filter(
+    (item) => !readNotificationIds.includes(item.id)
+  ).length
+
+  const markAllNotificationsRead = () => {
+    const ids = notificationItems.map((item) => item.id)
+    setReadNotificationIds(ids)
+
+    if (typeof window !== 'undefined' && user?.id) {
+      window.localStorage.setItem(
+        `finwise-notifications-read-${user.id}`,
+        JSON.stringify(ids)
+      )
+    }
+  }
+
+  const saveProfilePhotoUrl = async () => {
+    if (!user) return
+
+    const url = avatarInput.trim()
+
+    if (url && !/^https?:\\/\\//i.test(url)) {
+      setAvatarMessage('Please enter a valid image URL beginning with https://')
+      return
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      data: {
+        profile_photo_url: url || null,
+      },
+    })
+
+    if (error) {
+      setAvatarMessage(error.message || 'Could not update your profile photo.')
+      return
+    }
+
+    if (data.user) setUser(data.user)
+    setAvatarInput('')
+    setAvatarMessage(url ? 'Profile photo updated.' : 'Using your sign-in photo again.')
+  }
+
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined') return
+
+    try {
+      const stored = window.localStorage.getItem(
+        `finwise-notifications-read-${user.id}`
+      )
+      setReadNotificationIds(stored ? JSON.parse(stored) : [])
+    } catch {
+      setReadNotificationIds([])
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowNotifications(false)
+        setShowProfileMenu(false)
+      }
+    }
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      if (!target?.closest('[data-finwise-popover]')) {
+        setShowNotifications(false)
+        setShowProfileMenu(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    document.addEventListener('mousedown', handleOutsideClick)
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.removeEventListener('mousedown', handleOutsideClick)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') return
+
+    const voiceEnabled =
+      window.localStorage.getItem('finwise-voice-enabled') !== 'false'
+    const alreadySpoken = window.sessionStorage.getItem('finwise-welcome-spoken')
+
+    if (!voiceEnabled || alreadySpoken) return
+
+    const timer = window.setTimeout(() => {
+      speakGuide()
+      window.sessionStorage.setItem('finwise-welcome-spoken', 'true')
+    }, 650)
+
+    return () => window.clearTimeout(timer)
+  }, [user])
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
+
   const handleLogout = async () => {
     await signOut()
     window.location.href = '/login'
@@ -1127,13 +1322,13 @@ ${spendingDNA
       </aside>
 
       {/* FinWise AI Robot Guide */}
-      <div className="fixed left-0 bottom-0 z-50 hidden lg:block w-64 h-64 pointer-events-none">
+      <div className="fixed left-0 bottom-24 z-50 hidden lg:block w-60 h-56 pointer-events-none">
         <motion.div
-          animate={{ x: [0, 5, 0, -5, 0], y: [0, -3, 0, -3, 0] }}
+          animate={{ x: [0, 4, 0, -4, 0], y: [0, -2, 0, -2, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           className="absolute inset-x-0 bottom-0 h-full"
         >
-          <div className="absolute top-2 right-2 w-52 rounded-2xl bg-white text-slate-900 px-3 py-3 shadow-2xl border border-cyan-300">
+          <div className="absolute top-0 right-1 w-52 rounded-2xl bg-white text-slate-900 px-3 py-3 shadow-2xl border border-cyan-300">
             <div className="flex items-start gap-2">
               <div className="flex-1 text-xs font-extrabold leading-tight">
                 Plan with AI.<br />
@@ -1141,23 +1336,28 @@ ${spendingDNA
               </div>
               <button
                 type="button"
-                onClick={speakGuide}
-                className="pointer-events-auto shrink-0 w-8 h-8 rounded-full bg-slate-900 text-cyan-300 flex items-center justify-center hover:scale-105 transition"
-                title="Hear FinWise AI"
-                aria-label="Hear FinWise AI say Plan with AI. Direct your future."
+                onClick={toggleGuideSpeech}
+                className="pointer-events-auto shrink-0 w-9 h-9 rounded-full bg-slate-900 text-cyan-300 flex items-center justify-center hover:scale-105 transition"
+                title={isSpeaking ? 'Stop FinWise AI speech' : 'Speak with FinWise AI'}
+                aria-label={isSpeaking ? 'Stop FinWise AI speech' : 'Speak with FinWise AI'}
+                aria-pressed={isSpeaking}
               >
-                <FaVolumeUp className="text-xs" />
+                {isSpeaking ? <FaStop className="text-xs" /> : <FaVolumeUp className="text-xs" />}
               </button>
+            </div>
+            <div className="mt-2 text-[10px] font-semibold text-slate-500">
+              {isSpeaking ? 'Speaking • tap to stop' : 'Voice guide'}
             </div>
             <div className="absolute right-12 -bottom-2 w-4 h-4 bg-white border-r border-b border-cyan-300 rotate-45" />
           </div>
 
           <motion.img
-            src="/finwise-guy.svg"
+            key={isSpeaking ? 'speaking' : 'idle'}
+            src={isSpeaking ? '/finwise-guy-speaking.svg' : '/finwise-guy.svg'}
             alt="FinWise AI robot guide"
-            className="absolute left-5 bottom-0 w-36 h-auto drop-shadow-2xl"
-            animate={{ rotate: [0, 1, 0, -1, 0] }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute left-3 bottom-0 w-32 h-auto drop-shadow-2xl"
+            animate={{ rotate: [0, 0.8, 0, -0.8, 0] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
           />
         </motion.div>
       </div>
@@ -1222,24 +1422,234 @@ ${spendingDNA
                 onClick={() => setShowCoach(true)}
                 className="w-10 h-10 rounded-xl flex items-center justify-center bg-violet-500 text-white hover:bg-violet-600"
                 title="AI Money Coach"
+                aria-label="Open AI Money Coach"
               >
                 <FaRobot />
               </button>
 
-              <button
-                className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  isDark ? 'bg-slate-800' : 'bg-gray-100'
-                }`}
-              >
-                <FaBell />
-              </button>
+              <div className="relative" data-finwise-popover>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNotifications((current) => !current)
+                    setShowProfileMenu(false)
+                  }}
+                  className={`relative w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isDark ? 'bg-slate-800' : 'bg-gray-100'
+                  } hover:ring-2 hover:ring-cyan-400 transition`}
+                  aria-label={`Notifications${unreadNotificationCount ? `, ${unreadNotificationCount} unread` : ''}`}
+                  aria-expanded={showNotifications}
+                  aria-haspopup="true"
+                >
+                  <FaBell />
+                  {unreadNotificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+                      {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                    </span>
+                  )}
+                </button>
 
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 text-white flex items-center justify-center font-bold">
-                {user?.email?.[0]?.toUpperCase() || 'U'}
+                {showNotifications && (
+                  <div
+                    className={`absolute right-0 top-12 w-80 sm:w-96 rounded-2xl border shadow-2xl overflow-hidden ${
+                      isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'
+                    }`}
+                    role="dialog"
+                    aria-label="Notifications"
+                  >
+                    <div className="px-4 py-3 border-b flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold">Notifications</h3>
+                        <p className={`text-xs ${muted}`}>
+                          Budget and goal alerts
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={markAllNotificationsRead}
+                        className="text-xs font-semibold text-cyan-600 hover:text-cyan-500"
+                        disabled={!unreadNotificationCount}
+                      >
+                        Mark all read
+                      </button>
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto">
+                      {notificationItems.length === 0 ? (
+                        <div className={`px-5 py-8 text-center ${muted}`}>
+                          <FaCheckCircle className="mx-auto text-2xl text-emerald-500 mb-2" />
+                          <p className="font-semibold">You&apos;re all caught up.</p>
+                          <p className="text-xs mt-1">
+                            No budget or goal alerts right now.
+                          </p>
+                        </div>
+                      ) : (
+                        notificationItems.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              setReadNotificationIds((current) =>
+                                current.includes(item.id)
+                                  ? current
+                                  : [...current, item.id]
+                              )
+                            }}
+                            className={`w-full text-left px-4 py-3 border-b last:border-b-0 transition ${
+                              isDark
+                                ? 'border-slate-800 hover:bg-slate-800'
+                                : 'border-gray-100 hover:bg-gray-50'
+                            } `}
+                          >
+                            <div className="flex gap-3">
+                              <span className={`mt-0.5 shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                                item.tone === 'warning'
+                                  ? 'bg-amber-500/15 text-amber-500'
+                                  : 'bg-cyan-500/15 text-cyan-500'
+                              }`}>
+                                {item.tone === 'warning' ? <FaExclamationTriangle /> : <FaInfoCircle />}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="flex items-center gap-2">
+                                  <span className="font-semibold text-sm">{item.title}</span>
+                                  {!readNotificationIds.includes(item.id) && (
+                                    <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0" aria-label="Unread" />
+                                  )}
+                                </span>
+                                <span className={`block text-xs mt-1 ${muted}`}>
+                                  {item.message}
+                                </span>
+                              </span>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="relative" data-finwise-popover>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileMenu((current) => !current)
+                    setShowNotifications(false)
+                    setAvatarInput('')
+                    setAvatarMessage('')
+                  }}
+                  className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-teal-400 to-blue-500 text-white flex items-center justify-center font-bold hover:ring-2 hover:ring-cyan-400 transition"
+                  aria-label="Open profile menu"
+                  aria-expanded={showProfileMenu}
+                  aria-haspopup="true"
+                >
+                  {profileAvatar ? (
+                    <img
+                      src={profileAvatar}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>
+                      {profileName?.[0]?.toUpperCase() || 'U'}
+                    </span>
+                  )}
+                </button>
+
+                {showProfileMenu && (
+                  <div
+                    className={`absolute right-0 top-12 w-80 rounded-2xl border shadow-2xl overflow-hidden ${
+                      isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'
+                    }`}
+                    role="menu"
+                    aria-label="Profile menu"
+                  >
+                    <div className="p-4 border-b">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-teal-400 to-blue-500 text-white flex items-center justify-center font-bold">
+                          {profileAvatar ? (
+                            <img src={profileAvatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            profileName?.[0]?.toUpperCase() || 'U'
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold truncate">{profileName}</p>
+                          <p className={`text-xs ${muted} truncate`}>{user?.email}</p>
+                          <p className="text-[10px] text-cyan-600 mt-1">
+                            {user?.app_metadata?.provider === 'google' ? 'Google sign-in' : 'FinWise account'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <label className={`block text-xs font-semibold mb-1 ${muted}`}>
+                          Profile photo URL
+                        </label>
+                        <input
+                          value={avatarInput}
+                          onChange={(e) => setAvatarInput(e.target.value)}
+                          placeholder="https://..."
+                          className={`w-full px-3 py-2.5 rounded-xl border text-sm ${
+                            isDark ? 'bg-slate-950 border-slate-700' : 'bg-white border-gray-200'
+                          }`}
+                        />
+                        <p className={`text-[10px] mt-1 ${muted}`}>
+                          Your Google profile photo is used automatically when available.
+                        </p>
+                      </div>
+
+                      {avatarMessage && (
+                        <div className="text-xs text-cyan-600" role="status">
+                          {avatarMessage}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={saveProfilePhotoUrl}
+                        className="w-full py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-bold hover:bg-cyan-600"
+                      >
+                        Save profile photo
+                      </button>
+
+                      {profileAvatar && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAvatarInput('')
+                            saveProfilePhotoUrl()
+                          }}
+                          className={`w-full py-2.5 rounded-xl border text-sm font-semibold ${
+                            isDark ? 'border-slate-700 hover:bg-slate-800' : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          Use sign-in photo again
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-bold hover:bg-red-500/20"
+                        role="menuitem"
+                      >
+                        <FaSignOutAlt />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </header>
+
+        <div className="sr-only" aria-live="polite">
+          {isSpeaking ? 'FinWise AI is speaking.' : ''}
+        </div>
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
           {/* OVERVIEW */}
@@ -2341,11 +2751,12 @@ ${spendingDNA
                   <div>✨ {goalPlanMessage}</div>
                   <button
                     type="button"
-                    onClick={() => speakText(goalPlanMessage)}
+                    onClick={() => (isSpeaking ? stopSpeaking() : speakText(goalPlanMessage))}
                     className="mt-2 flex items-center gap-1 text-xs text-blue-500 font-semibold"
+                    aria-label={isSpeaking ? 'Stop AI plan speech' : 'Listen to AI plan'}
                   >
-                    <FaVolumeUp />
-                    Listen to AI plan
+                    {isSpeaking ? <FaStop /> : <FaVolumeUp />}
+                    {isSpeaking ? 'Stop AI plan' : 'Listen to AI plan'}
                   </button>
                 </div>
               )}
@@ -2533,12 +2944,12 @@ ${spendingDNA
                     {message.role === 'assistant' && (
                       <button
                         type="button"
-                        onClick={() => speakText(message.content)}
+                        onClick={() => (isSpeaking ? stopSpeaking() : speakText(message.content))}
                         className="mt-2 flex items-center gap-1 text-xs text-cyan-500 font-semibold"
-                        aria-label="Speak this AI response"
+                        aria-label={isSpeaking ? 'Stop AI speech' : 'Speak this AI response'}
                       >
-                        <FaVolumeUp />
-                        Listen
+                        {isSpeaking ? <FaStop /> : <FaVolumeUp />}
+                        {isSpeaking ? 'Stop' : 'Listen'}
                       </button>
                     )}
                   </div>
