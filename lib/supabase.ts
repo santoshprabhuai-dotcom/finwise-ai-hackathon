@@ -149,6 +149,132 @@ export const updateGoal = async (id: string, updates: any) => {
   return { data, error }
 }
 
+export const deleteGoal = async (id: string) => {
+  const { error } = await supabase
+    .from('goals')
+    .delete()
+    .eq('id', id)
+
+  return { error }
+}
+
+// Assets
+export const getAssets = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('assets')
+    .select('*')
+    .eq('user_id', userId)
+    .order('as_of_date', { ascending: false })
+
+  return { data, error }
+}
+
+export const addAsset = async (asset: any) => {
+  const { data, error } = await supabase
+    .from('assets')
+    .insert([asset])
+    .select()
+
+  return { data, error }
+}
+
+export const updateAsset = async (id: string, updates: any) => {
+  const { data, error } = await supabase
+    .from('assets')
+    .update(updates)
+    .eq('id', id)
+    .select()
+
+  return { data, error }
+}
+
+export const deleteAsset = async (id: string) => {
+  const { error } = await supabase
+    .from('assets')
+    .delete()
+    .eq('id', id)
+
+  return { error }
+}
+
+// Liabilities
+export const getLiabilities = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('liabilities')
+    .select('*')
+    .eq('user_id', userId)
+    .order('as_of_date', { ascending: false })
+
+  return { data, error }
+}
+
+export const addLiability = async (liability: any) => {
+  const { data, error } = await supabase
+    .from('liabilities')
+    .insert([liability])
+    .select()
+
+  return { data, error }
+}
+
+export const updateLiability = async (id: string, updates: any) => {
+  const { data, error } = await supabase
+    .from('liabilities')
+    .update(updates)
+    .eq('id', id)
+    .select()
+
+  return { data, error }
+}
+
+export const deleteLiability = async (id: string) => {
+  const { error } = await supabase
+    .from('liabilities')
+    .delete()
+    .eq('id', id)
+
+  return { error }
+}
+
+// Credit profile / bureau report
+export const getCreditProfiles = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('credit_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .order('report_date', { ascending: false })
+
+  return { data, error }
+}
+
+export const addCreditProfile = async (profile: any) => {
+  const { data, error } = await supabase
+    .from('credit_profiles')
+    .insert([profile])
+    .select()
+
+  return { data, error }
+}
+
+export const updateCreditProfile = async (id: string, updates: any) => {
+  const { data, error } = await supabase
+    .from('credit_profiles')
+    .update(updates)
+    .eq('id', id)
+    .select()
+
+  return { data, error }
+}
+
+export const deleteCreditProfile = async (id: string) => {
+  const { error } = await supabase
+    .from('credit_profiles')
+    .delete()
+    .eq('id', id)
+
+  return { error }
+}
+
 // AI Insights functions
 export const saveInsight = async (insight: any) => {
   const { data, error } = await supabase
