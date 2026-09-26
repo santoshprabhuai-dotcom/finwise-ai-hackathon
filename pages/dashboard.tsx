@@ -1158,7 +1158,7 @@ ${spendingDNA
 
     const url = (urlOverride ?? avatarInput).trim()
 
-    if (url && !/^https?:\\/\\//i.test(url)) {
+    if (url && !/^https?:\/\//i.test(url)) {
       setAvatarMessage('Please enter a valid image URL beginning with https://')
       return
     }
