@@ -1409,12 +1409,22 @@ ${spendingDNA
           {/* BUDGETS */}
           {activeTab === 'Budgets' && (
             <section>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold">Budgets</h2>
-                <p className={`text-sm ${muted}`}>
-                  Track spending against your saved budgets.
-                </p>
-              </div>
+           <div className="mb-6 flex items-center justify-between gap-4">
+  <div>
+    <h2 className="text-2xl font-bold">Budgets</h2>
+    <p className={`text-sm ${muted}`}>
+      Track spending against your saved budgets.
+    </p>
+  </div>
+
+  <button
+    onClick={() => setShowBudgetModal(true)}
+    className="px-4 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold flex items-center gap-2"
+  >
+    <FaPlus />
+    Add Budget
+  </button>
+</div>
 
               {budgetRows.length === 0 ? (
                 <div className={`rounded-2xl border p-10 text-center ${card}`}>
