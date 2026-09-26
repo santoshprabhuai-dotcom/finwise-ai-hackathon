@@ -733,6 +733,27 @@ ${spendingDNA
         </div>
       </aside>
 
+      {/* Walking FinWise AI Guide */}
+      <div className="fixed left-2 bottom-14 z-30 hidden lg:block pointer-events-none">
+        <motion.div
+          animate={{ x: [0, 16, 0, -16, 0], y: [0, -4, 0, -4, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          className="relative"
+        >
+          <div className="absolute -top-10 left-10 w-44 rounded-2xl bg-white text-slate-900 px-4 py-3 text-center text-sm font-bold shadow-xl border-2 border-teal-300">
+            Plan your financial future with me.
+            <div className="absolute left-8 -bottom-3 w-5 h-5 bg-white border-r-2 border-b-2 border-teal-300 rotate-45" />
+          </div>
+          <motion.img
+            src="/finwise-guy.png"
+            alt="FinWise AI guide"
+            className="w-44 h-auto drop-shadow-2xl"
+            animate={{ rotate: [0, 1, 0, -1, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </motion.div>
+      </div>
+
       {/* Main */}
       <main className="lg:ml-64 flex-1 min-w-0">
         {/* Header */}
