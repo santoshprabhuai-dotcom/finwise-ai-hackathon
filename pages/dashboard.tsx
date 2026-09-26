@@ -2549,16 +2549,28 @@ ${spendingDNA
                   </p>
                 </div>
 
-                <button
-                  onClick={() => {
-                    resetTransactionForm()
-                    setShowTransactionModal(true)
-                  }}
-                  className="px-4 py-3 rounded-xl bg-teal-500 text-white font-semibold flex items-center gap-2"
-                >
-                  <FaPlus />
-                  Add Transaction
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowImportModal(true)}
+                    className="px-4 py-3 rounded-xl border border-violet-400/40 text-violet-600 dark:text-violet-300 font-semibold flex items-center gap-2 hover:bg-violet-500/10"
+                    title="Upload an Excel workbook containing a Transactions sheet"
+                  >
+                    <FaUpload />
+                    Upload Excel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetTransactionForm()
+                      setShowTransactionModal(true)
+                    }}
+                    className="px-4 py-3 rounded-xl bg-teal-500 text-white font-semibold flex items-center gap-2"
+                  >
+                    <FaPlus />
+                    Add Transaction
+                  </button>
+                </div>
               </div>
 
               <div className={`rounded-2xl border overflow-hidden ${card}`}>
@@ -3675,7 +3687,9 @@ ${spendingDNA
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl p-6">
             <div className="flex items-center justify-between mb-5"><div><h2 className="text-xl font-bold">Import Excel</h2><p className="text-sm text-slate-400">Upload the FinWise workbook format.</p></div><button onClick={() => setShowImportModal(false)} className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center"><FaTimes /></button></div>
-            <div className="text-sm text-slate-400 mb-4">Required sheets: Transactions, Assets, Liabilities, Credit_Profile. The import adds rows; it never deletes existing data.</div>
+            <div className="text-sm text-slate-400 mb-4">
+              Upload the FinWise Excel workbook. For the Transactions screen, the <strong className="text-slate-200">Transactions</strong> sheet is the relevant sheet. Assets, Liabilities and Credit_Profile are imported when those sheets are included. Existing data is never deleted.
+            </div>
             <input type="file" accept=".xlsx,.xls" onChange={(e) => e.target.files?.[0] && importWorkbook(e.target.files[0])} className="w-full text-sm" />
             {importMessage && <div className="mt-4 rounded-xl bg-violet-500/10 border border-violet-400/30 p-3 text-sm">{importMessage}</div>}
             <button onClick={() => setShowImportModal(false)} className="mt-5 w-full py-3 rounded-xl border border-slate-700 font-bold">Close</button>
