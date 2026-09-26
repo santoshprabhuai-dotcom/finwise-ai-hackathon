@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 360">
+<defs>
+  <linearGradient id="hood" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fafc"/><stop offset="1" stop-color="#dbeafe"/></linearGradient>
+  <linearGradient id="jeans" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#334155"/><stop offset="1" stop-color="#0f172a"/></linearGradient>
+  <linearGradient id="glow" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#14b8a6" stop-opacity=".05"/><stop offset=".5" stop-color="#22d3ee" stop-opacity=".7"/><stop offset="1" stop-color="#14b8a6" stop-opacity=".05"/></linearGradient>
+</defs>
+<ellipse cx="105" cy="342" rx="78" ry="12" fill="url(#glow)"/>
+<g>
+  <path d="M58 112 Q82 94 108 108 L134 144 Q122 176 88 178 Q55 168 48 141Z" fill="url(#hood)" stroke="#cbd5e1" stroke-width="2"/>
+  <path d="M78 111 Q97 126 115 111" fill="none" stroke="#94a3b8" stroke-width="3"/>
+  <circle cx="96" cy="75" r="40" fill="#f6b98a"/>
+  <path d="M58 68 Q60 25 99 28 Q130 30 139 62 Q128 47 110 49 Q94 52 82 43 Q76 61 58 68Z" fill="#3b241c"/>
+  <path d="M61 63 Q74 49 82 41" fill="none" stroke="#6b3f2b" stroke-width="8" stroke-linecap="round"/>
+  <ellipse cx="81" cy="76" rx="5" ry="7" fill="#172033"/>
+  <ellipse cx="111" cy="76" rx="5" ry="7" fill="#172033"/>
+  <circle cx="82" cy="74" r="1.8" fill="#fff"/><circle cx="112" cy="74" r="1.8" fill="#fff"/>
+  <path d="M86 94 Q97 101 108 93" fill="none" stroke="#7c2d12" stroke-width="3" stroke-linecap="round"/>
+  <path d="M70 121 Q95 132 119 121 L125 170 L64 170Z" fill="url(#hood)" stroke="#cbd5e1" stroke-width="2"/>
+  <path d="M84 128 L84 154 L96 146 L108 154 L108 128" fill="none" stroke="#14b8a6" stroke-width="5"/>
+  <path d="M91 143 L96 136 L101 143" fill="none" stroke="#2563eb" stroke-width="4"/>
+  <text x="96" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#0f172a">FinWise AI</text>
+  <path d="M66 132 Q42 146 33 174" fill="none" stroke="#f6b98a" stroke-width="13" stroke-linecap="round"/>
+  <path d="M121 132 Q148 143 166 119" fill="none" stroke="#f6b98a" stroke-width="13" stroke-linecap="round"/>
+  <path d="M163 119 L183 106" stroke="#f6b98a" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="184" cy="105" r="6" fill="#f6b98a"/>
+  <path d="M78 168 Q72 205 85 241 L101 284" fill="none" stroke="url(#jeans)" stroke-width="24" stroke-linecap="round"/>
+  <path d="M111 168 Q121 204 113 236 L105 279" fill="none" stroke="url(#jeans)" stroke-width="24" stroke-linecap="round"/>
+  <path d="M96 278 Q79 286 64 300" fill="none" stroke="#f8fafc" stroke-width="18" stroke-linecap="round"/>
+  <path d="M63 299 Q47 306 35 302" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round"/>
+  <path d="M105 278 Q122 288 139 301" fill="none" stroke="#f8fafc" stroke-width="18" stroke-linecap="round"/>
+  <path d="M138 300 Q155 308 168 301" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round"/>
+  <path d="M61 137 Q55 157 62 174" fill="none" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="36" cy="176" r="4" fill="#f6b98a"/>
+</g>
+</svg>
