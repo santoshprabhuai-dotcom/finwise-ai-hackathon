@@ -185,6 +185,9 @@ export default function Dashboard() {
     target_amount: '',
     current_amount: '0',
     target_date: '',
+    inflation_rate: '6',
+    return_rate: '8',
+    risk_profile: 'Balanced',
   })
 
 const [showBudgetModal, setShowBudgetModal] = useState(false)
@@ -587,6 +590,8 @@ Description: ${description}`,
   const planGoalWithAI = async () => {
     const target = Number(goalForm.target_amount)
     const current = Number(goalForm.current_amount || 0)
+    const inflation = Number(goalForm.inflation_rate)
+    const annualReturn = Number(goalForm.return_rate)
 
     if (!goalForm.name.trim() || !Number.isFinite(target) || target <= 0) {
       setGoalPlanMessage('Enter a goal name and a target amount first.')
@@ -603,15 +608,42 @@ Description: ${description}`,
       return
     }
 
-    const start = new Date()
-    const end = new Date(goalForm.target_date)
+    if (
+      !Number.isFinite(inflation) ||
+      inflation < 0 ||
+      inflation > 20 ||
+      !Number.isFinite(annualReturn) ||
+      annualReturn < 0 ||
+      annualReturn > 30
+    ) {
+      setGoalPlanMessage('Use assumptions between 0% and 20% for inflation and 0% and 30% for return.')
+      return
+    }
+
+    const startDate = new Date()
+    const endDate = new Date(goalForm.target_date)
     const months = Math.max(
       1,
-      (end.getFullYear() - start.getFullYear()) * 12 +
-        (end.getMonth() - start.getMonth())
+      (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+        (endDate.getMonth() - startDate.getMonth())
     )
-    const remaining = Math.max(0, target - current)
-    const monthly = remaining / months
+    const years = months / 12
+
+    // Goal planning uses inflation-adjusted future cost and compounds the
+    // existing savings. Monthly contribution is calculated as an illustration
+    // using an end-of-month contribution assumption.
+    const futureTarget = target * Math.pow(1 + inflation / 100, years)
+    const monthlyRate = annualReturn / 100 / 12
+    const currentFutureValue = current * Math.pow(1 + monthlyRate, months)
+
+    const monthly =
+      monthlyRate === 0
+        ? Math.max(0, (futureTarget - currentFutureValue) / months)
+        : Math.max(
+            0,
+            ((futureTarget - currentFutureValue) * monthlyRate) /
+              (Math.pow(1 + monthlyRate, months) - 1)
+          )
 
     setGoalPlanLoading(true)
     setGoalPlanMessage('FinWise AI is checking your goal plan...')
@@ -621,27 +653,30 @@ Description: ${description}`,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system: 'You are a careful personal-finance goal planning assistant. Give practical, conservative guidance. Do not promise returns or recommend specific financial products. Return 2 short sentences maximum.',
+          system: 'You are a careful personal-finance goal planning assistant for India. Explain that return and inflation assumptions are illustrations, not guarantees. Do not recommend a specific mutual fund, stock, or financial product. Give practical, conservative guidance in 2 short sentences.',
           messages: [{
             role: 'user',
             content: `Goal: ${goalForm.name.trim()}
-Target: ₹${target}
+Current goal cost: ₹${target}
 Already saved: ₹${current}
 Target date: ${goalForm.target_date}
-Required monthly contribution: approximately ₹${Math.ceil(monthly)}`,
+Inflation assumption: ${inflation}%
+Illustrative annual return assumption: ${annualReturn}%
+Risk profile: ${goalForm.risk_profile}
+Calculated future goal cost: ₹${Math.ceil(futureTarget)}
+Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
           }],
         }),
       })
       const data = await response.json()
       const advice = String(data.content || '').trim()
+
       setGoalPlanMessage(
-        advice
-          ? `Plan: save about ₹${Math.ceil(monthly).toLocaleString('en-IN')}/month. ${advice}`
-          : `Plan: save about ₹${Math.ceil(monthly).toLocaleString('en-IN')}/month.`
+        `Inflation-adjusted target: ₹${Math.ceil(futureTarget).toLocaleString('en-IN')}. Monthly contribution: about ₹${Math.ceil(monthly).toLocaleString('en-IN')} at ${annualReturn}% assumed return. ${advice}`
       )
     } catch {
       setGoalPlanMessage(
-        `Plan: save about ₹${Math.ceil(monthly).toLocaleString('en-IN')}/month to reach this goal on time.`
+        `Inflation-adjusted target: ₹${Math.ceil(futureTarget).toLocaleString('en-IN')}. Monthly contribution: about ₹${Math.ceil(monthly).toLocaleString('en-IN')} at ${annualReturn}% assumed return.`
       )
     } finally {
       setGoalPlanLoading(false)
@@ -682,6 +717,9 @@ Required monthly contribution: approximately ₹${Math.ceil(monthly)}`,
       target_amount: '',
       current_amount: '0',
       target_date: '',
+      inflation_rate: '6',
+      return_rate: '8',
+      risk_profile: 'Balanced',
     })
     setGoalPlanMessage('')
     setShowGoalModal(false)
@@ -2157,6 +2195,49 @@ ${spendingDNA
                 onChange={(e) => setGoalForm({ ...goalForm, target_date: e.target.value })}
                 className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
               />
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${muted}`}>Inflation %</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    step="0.1"
+                    value={goalForm.inflation_rate}
+                    onChange={(e) => setGoalForm({ ...goalForm, inflation_rate: e.target.value })}
+                    className={`w-full px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${muted}`}>Return %</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="30"
+                    step="0.1"
+                    value={goalForm.return_rate}
+                    onChange={(e) => setGoalForm({ ...goalForm, return_rate: e.target.value })}
+                    className={`w-full px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${muted}`}>Risk</label>
+                  <select
+                    value={goalForm.risk_profile}
+                    onChange={(e) => setGoalForm({ ...goalForm, risk_profile: e.target.value })}
+                    className={`w-full px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
+                  >
+                    <option>Conservative</option>
+                    <option>Balanced</option>
+                    <option>Growth</option>
+                  </select>
+                </div>
+              </div>
+
+              <p className={`text-xs ${muted}`}>
+                These are editable planning assumptions, not guaranteed returns. FinWise uses inflation to estimate the future goal cost and the return assumption to illustrate the monthly contribution.
+              </p>
 
               {goalPlanMessage && (
                 <div className="rounded-xl bg-blue-500/10 border border-blue-400/30 px-4 py-3 text-sm">
