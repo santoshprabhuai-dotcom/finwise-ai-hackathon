@@ -745,7 +745,7 @@ ${spendingDNA
             <div className="absolute left-8 -bottom-3 w-5 h-5 bg-white border-r-2 border-b-2 border-teal-300 rotate-45" />
           </div>
           <motion.img
-            src="/finwise-guy.png"
+            src="/finwise-guy.svg"
             alt="FinWise AI guide"
             className="w-44 h-auto drop-shadow-2xl"
             animate={{ rotate: [0, 1, 0, -1, 0] }}
