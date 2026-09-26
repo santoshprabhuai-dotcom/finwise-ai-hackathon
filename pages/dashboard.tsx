@@ -33,6 +33,7 @@ import {
   FaPaperPlane,
   FaCheckCircle,
   FaVolumeUp,
+  FaMicrophone,
 } from 'react-icons/fa'
 
 import {
@@ -214,6 +215,7 @@ const [budgetForm, setBudgetForm] = useState({
   const [coachMessages, setCoachMessages] = useState<any[]>([])
   const [coachInput, setCoachInput] = useState('')
   const [coachLoading, setCoachLoading] = useState(false)
+  const [isListening, setIsListening] = useState(false)
 
   const [insights, setInsights] = useState<string[]>([])
   const [insightsLoading, setInsightsLoading] = useState(false)
@@ -264,19 +266,63 @@ const [budgetForm, setBudgetForm] = useState({
     window.localStorage.setItem('finwise-theme', value)
   }
 
-  const speakGuide = () => {
+  const speakText = (message: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
 
     window.speechSynthesis.cancel()
 
-    const utterance = new SpeechSynthesisUtterance(
-      'Plan with AI. Direct your future.'
-    )
+    const utterance = new SpeechSynthesisUtterance(message)
     utterance.rate = 0.95
     utterance.pitch = 1.05
     utterance.volume = 1
 
     window.speechSynthesis.speak(utterance)
+  }
+
+  const speakGuide = () => {
+    speakText('Plan with AI. Direct your future.')
+  }
+
+  const startVoiceInput = () => {
+    if (typeof window === 'undefined') return
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition
+
+    if (!SpeechRecognition) {
+      alert('Voice input is not supported by this browser. You can still type your question.')
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'en-US'
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.maxAlternatives = 1
+
+    recognition.onstart = () => setIsListening(true)
+
+    recognition.onresult = (event: any) => {
+      const transcript = String(
+        event.results?.[0]?.[0]?.transcript || ''
+      ).trim()
+
+      if (transcript) {
+        setCoachInput(transcript)
+        askCoach(transcript)
+      }
+    }
+
+    recognition.onerror = () => {
+      setIsListening(false)
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    recognition.start()
   }
 
 
@@ -689,13 +735,17 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       const data = await response.json()
       const advice = String(data.content || '').trim()
 
-      setGoalPlanMessage(
+      const goalMessage =
         `Inflation-adjusted target: ₹${Math.ceil(futureTarget).toLocaleString('en-IN')}. Monthly contribution: about ₹${Math.ceil(monthly).toLocaleString('en-IN')} at ${annualReturn}% assumed return. ${advice}`
-      )
+
+      setGoalPlanMessage(goalMessage)
+      speakText(goalMessage)
     } catch {
-      setGoalPlanMessage(
+      const goalMessage =
         `Inflation-adjusted target: ₹${Math.ceil(futureTarget).toLocaleString('en-IN')}. Monthly contribution: about ₹${Math.ceil(monthly).toLocaleString('en-IN')} at ${annualReturn}% assumed return.`
-      )
+
+      setGoalPlanMessage(goalMessage)
+      speakText(goalMessage)
     } finally {
       setGoalPlanLoading(false)
     }
@@ -820,10 +870,10 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
     await loadDashboardData(user.id)
   }
   
-  const askCoach = async () => {
-    if (!coachInput.trim() || coachLoading) return
+  const askCoach = async (inputOverride?: string) => {
+    const userMessage = (inputOverride ?? coachInput).trim()
 
-    const userMessage = coachInput.trim()
+    if (!userMessage || coachLoading) return
 
     setCoachMessages((current) => [
       ...current,
@@ -878,15 +928,19 @@ Do not invent transactions or financial data.
         throw new Error(data.error || 'AI request failed')
       }
 
+      const assistantMessage =
+        data.content ||
+        'I could not generate a response right now.'
+
       setCoachMessages((current) => [
         ...current,
         {
           role: 'assistant',
-          content:
-            data.content ||
-            'I could not generate a response right now.',
+          content: assistantMessage,
         },
       ])
+
+      speakText(assistantMessage)
     } catch (error) {
       setCoachMessages((current) => [
         ...current,
@@ -955,16 +1009,17 @@ ${spendingDNA
         .filter(Boolean)
         .slice(0, 4)
 
-      setInsights(
-        parsed.length
-          ? parsed
-          : [
-              'Your financial summary is ready for review.',
-              'Review your largest spending category for possible savings.',
-              'Keep monitoring your savings rate each month.',
-              'Use the AI Money Coach for personalized questions.',
-            ]
-      )
+      const insightList = parsed.length
+        ? parsed
+        : [
+            'Your financial summary is ready for review.',
+            'Review your largest spending category for possible savings.',
+            'Keep monitoring your savings rate each month.',
+            'Use the AI Money Coach for personalized questions.',
+          ]
+
+      setInsights(insightList)
+      speakText(insightList.join(' '))
     } catch {
       setInsights([
         `Your savings rate is ${stats.savingsRate.toFixed(1)}% this month.`,
@@ -1766,6 +1821,14 @@ ${spendingDNA
                           </div>
 
                           <p className="leading-6">{insight}</p>
+                          <button
+                            type="button"
+                            onClick={() => speakText(insight)}
+                            className="mt-3 flex items-center gap-1 text-xs text-violet-500 font-semibold"
+                          >
+                            <FaVolumeUp />
+                            Listen
+                          </button>
                         </div>
                       </div>
                     </motion.div>
@@ -2275,7 +2338,15 @@ ${spendingDNA
 
               {goalPlanMessage && (
                 <div className="rounded-xl bg-blue-500/10 border border-blue-400/30 px-4 py-3 text-sm">
-                  ✨ {goalPlanMessage}
+                  <div>✨ {goalPlanMessage}</div>
+                  <button
+                    type="button"
+                    onClick={() => speakText(goalPlanMessage)}
+                    className="mt-2 flex items-center gap-1 text-xs text-blue-500 font-semibold"
+                  >
+                    <FaVolumeUp />
+                    Listen to AI plan
+                  </button>
                 </div>
               )}
 
@@ -2458,6 +2529,18 @@ ${spendingDNA
                     }`}
                   >
                     {message.content}
+
+                    {message.role === 'assistant' && (
+                      <button
+                        type="button"
+                        onClick={() => speakText(message.content)}
+                        className="mt-2 flex items-center gap-1 text-xs text-cyan-500 font-semibold"
+                        aria-label="Speak this AI response"
+                      >
+                        <FaVolumeUp />
+                        Listen
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -2492,7 +2575,18 @@ ${spendingDNA
                 />
 
                 <button
-                  onClick={askCoach}
+                  type="button"
+                  onClick={startVoiceInput}
+                  disabled={coachLoading || isListening}
+                  className="w-12 rounded-xl bg-cyan-500 text-white flex items-center justify-center disabled:opacity-60"
+                  title={isListening ? 'Listening...' : 'Ask by voice'}
+                  aria-label={isListening ? 'Listening for your question' : 'Ask by voice'}
+                >
+                  <FaMicrophone className={isListening ? 'animate-pulse' : ''} />
+                </button>
+
+                <button
+                  onClick={() => askCoach()}
                   disabled={coachLoading}
                   className="w-12 rounded-xl bg-violet-500 text-white flex items-center justify-center"
                 >
