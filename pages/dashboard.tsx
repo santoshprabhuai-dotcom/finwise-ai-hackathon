@@ -176,6 +176,16 @@ export default function Dashboard() {
 
   const [showTransactionModal, setShowTransactionModal] = useState(false)
   const [showCoach, setShowCoach] = useState(false)
+  const [showGoalModal, setShowGoalModal] = useState(false)
+  const [goalPlanLoading, setGoalPlanLoading] = useState(false)
+  const [goalPlanMessage, setGoalPlanMessage] = useState('')
+
+  const [goalForm, setGoalForm] = useState({
+    name: '',
+    target_amount: '',
+    current_amount: '0',
+    target_date: '',
+  })
 
 const [showBudgetModal, setShowBudgetModal] = useState(false)
 
@@ -572,6 +582,110 @@ Description: ${description}`,
     } finally {
       setSmartCategoryLoading(false)
     }
+  }
+
+  const planGoalWithAI = async () => {
+    const target = Number(goalForm.target_amount)
+    const current = Number(goalForm.current_amount || 0)
+
+    if (!goalForm.name.trim() || !Number.isFinite(target) || target <= 0) {
+      setGoalPlanMessage('Enter a goal name and a target amount first.')
+      return
+    }
+
+    if (current < 0 || current > target) {
+      setGoalPlanMessage('Current saved amount must be between 0 and the target.')
+      return
+    }
+
+    if (!goalForm.target_date) {
+      setGoalPlanMessage('Choose a target date so FinWise AI can calculate a monthly plan.')
+      return
+    }
+
+    const start = new Date()
+    const end = new Date(goalForm.target_date)
+    const months = Math.max(
+      1,
+      (end.getFullYear() - start.getFullYear()) * 12 +
+        (end.getMonth() - start.getMonth())
+    )
+    const remaining = Math.max(0, target - current)
+    const monthly = remaining / months
+
+    setGoalPlanLoading(true)
+    setGoalPlanMessage('FinWise AI is checking your goal plan...')
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system: 'You are a careful personal-finance goal planning assistant. Give practical, conservative guidance. Do not promise returns or recommend specific financial products. Return 2 short sentences maximum.',
+          messages: [{
+            role: 'user',
+            content: `Goal: ${goalForm.name.trim()}
+Target: ₹${target}
+Already saved: ₹${current}
+Target date: ${goalForm.target_date}
+Required monthly contribution: approximately ₹${Math.ceil(monthly)}`,
+          }],
+        }),
+      })
+      const data = await response.json()
+      const advice = String(data.content || '').trim()
+      setGoalPlanMessage(
+        advice
+          ? `Plan: save about ₹${Math.ceil(monthly).toLocaleString('en-IN')}/month. ${advice}`
+          : `Plan: save about ₹${Math.ceil(monthly).toLocaleString('en-IN')}/month.`
+      )
+    } catch {
+      setGoalPlanMessage(
+        `Plan: save about ₹${Math.ceil(monthly).toLocaleString('en-IN')}/month to reach this goal on time.`
+      )
+    } finally {
+      setGoalPlanLoading(false)
+    }
+  }
+
+  const submitGoal = async () => {
+    if (!user) return
+
+    const name = goalForm.name.trim()
+    const target = Number(goalForm.target_amount)
+    const current = Number(goalForm.current_amount || 0)
+
+    if (!name || !Number.isFinite(target) || target <= 0) {
+      alert('Please enter a goal name and a valid target amount.')
+      return
+    }
+
+    if (current < 0 || current > target) {
+      alert('Current saved amount must be between 0 and the target.')
+      return
+    }
+
+    const result = await addGoal({
+      user_id: user.id,
+      name,
+      target_amount: target,
+      current_amount: current,
+    })
+
+    if (result.error) {
+      alert(result.error.message || 'Could not save goal.')
+      return
+    }
+
+    setGoalForm({
+      name: '',
+      target_amount: '',
+      current_amount: '0',
+      target_date: '',
+    })
+    setGoalPlanMessage('')
+    setShowGoalModal(false)
+    await loadDashboardData(user.id)
   }
 
   const submitTransaction = async () => {
@@ -1674,11 +1788,20 @@ ${spendingDNA
           {/* GOALS */}
           {activeTab === 'Goals' && (
             <section>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold">Goals</h2>
-                <p className={`text-sm ${muted}`}>
-                  Keep track of the financial goals you have created.
-                </p>
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold">Goals</h2>
+                  <p className={`text-sm ${muted}`}>
+                    Turn a goal into a clear target, deadline and monthly saving plan.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowGoalModal(true)}
+                  className="px-4 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold flex items-center gap-2"
+                >
+                  <FaPlus />
+                  Plan a Goal
+                </button>
               </div>
 
               {goals.length === 0 ? (
@@ -1984,6 +2107,78 @@ ${spendingDNA
               >
                 Save Transaction
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Goal Planner Modal */}
+      {showGoalModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className={`w-full max-w-lg rounded-2xl border shadow-2xl p-6 ${card}`}>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-xl font-bold">AI Goal Planner</h2>
+                <p className={`text-sm ${muted}`}>Set a realistic target and let FinWise calculate the saving pace.</p>
+              </div>
+              <button onClick={() => setShowGoalModal(false)} className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center"><FaTimes /></button>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                value={goalForm.name}
+                onChange={(e) => setGoalForm({ ...goalForm, name: e.target.value })}
+                placeholder="Goal name (e.g. Emergency Fund, Home Down Payment)"
+                className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="number"
+                  min="1"
+                  value={goalForm.target_amount}
+                  onChange={(e) => setGoalForm({ ...goalForm, target_amount: e.target.value })}
+                  placeholder="Target amount"
+                  className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  value={goalForm.current_amount}
+                  onChange={(e) => setGoalForm({ ...goalForm, current_amount: e.target.value })}
+                  placeholder="Already saved"
+                  className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
+                />
+              </div>
+
+              <input
+                type="date"
+                value={goalForm.target_date}
+                onChange={(e) => setGoalForm({ ...goalForm, target_date: e.target.value })}
+                className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
+              />
+
+              {goalPlanMessage && (
+                <div className="rounded-xl bg-blue-500/10 border border-blue-400/30 px-4 py-3 text-sm">
+                  ✨ {goalPlanMessage}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={planGoalWithAI}
+                  disabled={goalPlanLoading}
+                  className="py-3 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold disabled:opacity-60"
+                >
+                  {goalPlanLoading ? 'Planning...' : '✨ AI Plan'}
+                </button>
+                <button
+                  onClick={submitGoal}
+                  className="py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold"
+                >
+                  Save Goal
+                </button>
+              </div>
             </div>
           </div>
         </div>
