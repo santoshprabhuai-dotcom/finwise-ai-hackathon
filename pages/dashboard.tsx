@@ -720,6 +720,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
 
     const result = await addGoal({
       user_id: user.id,
+      title: name,
       name,
       target_amount: target,
       current_amount: current,
