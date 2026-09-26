@@ -2573,6 +2573,7 @@ ${spendingDNA
                           <th className="text-left p-4">Category</th>
                           <th className="text-left p-4">Type</th>
                           <th className="text-right p-4">Amount</th>
+                          <th className="text-right p-4">Actions</th>
                         </tr>
                       </thead>
 
@@ -2635,6 +2636,12 @@ ${spendingDNA
                                   {money(
                                     Number(transaction.amount || 0)
                                   )}
+                                </td>
+                                <td className="p-4">
+                                  <div className="flex justify-end gap-2">
+                                    <button type="button" onClick={() => openEditTransaction(transaction)} className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center" title="Edit transaction" aria-label="Edit transaction"><FaEdit /></button>
+                                    <button type="button" onClick={() => removeTransaction(transaction.id)} className="w-9 h-9 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center" title="Delete transaction" aria-label="Delete transaction"><FaTrash /></button>
+                                  </div>
                                 </td>
                               </tr>
                             )
@@ -2774,6 +2781,10 @@ ${spendingDNA
                         <span className="font-bold text-teal-500">
                           {Math.round(budget.percentage)}%
                         </span>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => openEditBudget(budget)} className="text-blue-500" aria-label="Edit budget"><FaEdit /></button>
+                          <button type="button" onClick={() => removeBudget(budget.id)} className="text-red-500" aria-label="Delete budget"><FaTrash /></button>
+                        </div>
                       </div>
 
                       <div
@@ -2886,11 +2897,104 @@ ${spendingDNA
                         <div className="mt-2 text-right text-sm font-bold text-blue-500">
                           {Math.round(percentage)}%
                         </div>
+                        <div className="mt-4 flex justify-end gap-3">
+                          <button type="button" onClick={() => openEditGoal(goal)} className="text-blue-500" aria-label="Edit goal"><FaEdit /></button>
+                          <button type="button" onClick={() => removeGoal(goal.id)} className="text-red-500" aria-label="Delete goal"><FaTrash /></button>
+                        </div>
                       </div>
                     )
                   })}
                 </div>
               )}
+            </section>
+          )}
+
+          {/* NET WORTH */}
+          {activeTab === 'Net Worth' && (
+            <section>
+              <div className="flex items-center justify-between mb-6 gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold">Assets & Liabilities</h2>
+                  <p className={\`${muted}\`}>See your financial position and net worth in one place.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setShowAssetModal(true)} className="px-4 py-3 rounded-xl bg-teal-500 text-white font-bold flex items-center gap-2"><FaPlus /> Asset</button>
+                  <button onClick={() => setShowLiabilityModal(true)} className="px-4 py-3 rounded-xl bg-orange-500 text-white font-bold flex items-center gap-2"><FaPlus /> Liability</button>
+                  <button onClick={() => setShowImportModal(true)} className="px-4 py-3 rounded-xl bg-violet-500 text-white font-bold flex items-center gap-2"><FaUpload /> Excel</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className={\`${card}\`}><p className={\`${muted}\`}>Total Assets</p><p className="text-2xl font-bold text-emerald-500 mt-1">{money(totalAssets)}</p></div>
+                <div className={\`${card}\`}><p className={\`${muted}\`}>Total Liabilities</p><p className="text-2xl font-bold text-red-500 mt-1">{money(totalLiabilities)}</p></div>
+                <div className={\`${card}\`}><p className={\`${muted}\`}>Net Worth</p><p className="text-2xl font-bold text-blue-500 mt-1">{money(netWorth)}</p></div>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className={\`${card} rounded-2xl border p-5\`}>
+                  <h3 className="font-bold mb-4">Assets</h3>
+                  <div className="space-y-3">
+                    {assets.length === 0 ? <p className={\`${muted}\`}>No assets added yet.</p> : assets.map((asset) => (
+                      <div key={asset.id} className="flex items-center justify-between gap-3 border-b last:border-b-0 pb-3 last:pb-0">
+                        <div><p className="font-semibold">{asset.name}</p><p className={\`${muted} text-xs\`}>{asset.type} • {dateLabel(asset.as_of_date)}</p></div>
+                        <div className="flex items-center gap-3"><strong className="text-emerald-500">{money(Number(asset.current_value || 0))}</strong><button onClick={() => openEditAsset(asset)} className="text-blue-500" aria-label="Edit asset"><FaEdit /></button><button onClick={() => removeAsset(asset.id)} className="text-red-500" aria-label="Delete asset"><FaTrash /></button></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className={\`${card} rounded-2xl border p-5\`}>
+                  <h3 className="font-bold mb-4">Liabilities</h3>
+                  <div className="space-y-3">
+                    {liabilities.length === 0 ? <p className={\`${muted}\`}>No liabilities added yet.</p> : liabilities.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between gap-3 border-b last:border-b-0 pb-3 last:pb-0">
+                        <div><p className="font-semibold">{item.name}</p><p className={\`${muted} text-xs\`}>{item.type} • {dateLabel(item.as_of_date)}</p></div>
+                        <div className="flex items-center gap-3"><strong className="text-red-500">{money(Number(item.outstanding_amount || 0))}</strong><button onClick={() => openEditLiability(item)} className="text-blue-500" aria-label="Edit liability"><FaEdit /></button><button onClick={() => removeLiability(item.id)} className="text-red-500" aria-label="Delete liability"><FaTrash /></button></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* CREDIT HEALTH */}
+          {activeTab === 'Credit Health' && (
+            <section>
+              <div className="flex items-center justify-between mb-6 gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold">Credit Health</h2>
+                  <p className={\`${muted}\`}>Track your reported bureau score and a separate FinWise planning indicator.</p>
+                </div>
+                <button onClick={() => setShowCreditModal(true)} className="px-4 py-3 rounded-xl bg-blue-500 text-white font-bold flex items-center gap-2"><FaPlus /> Add Credit Report</button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className={\`${card} rounded-2xl border p-5\`}><p className={\`${muted}\`}>Reported CIBIL Score</p><p className="text-4xl font-black mt-2">{latestCredit?.cibil_score ?? '—'}</p><p className={\`${muted} text-xs mt-1\`}>Official bureau score entered from your report</p></div>
+                <div className={\`${card} rounded-2xl border p-5\`}><p className={\`${muted}\`}>Credit Utilization</p><p className="text-4xl font-black mt-2">{latestCredit?.total_credit_limit ? Math.round(creditUtilization) + '%' : '—'}</p><p className={\`${muted} text-xs mt-1\`}>Based on the figures you entered/imported</p></div>
+                <div className={\`${card} rounded-2xl border p-5\`}><p className={\`${muted}\`}>FinWise Credit Health</p><p className="text-4xl font-black text-cyan-500 mt-2">{finwiseCreditHealth}/100</p><p className={\`${muted} text-xs mt-1\`}>Planning indicator — not a bureau score</p></div>
+              </div>
+              <div className={\`${card} rounded-2xl border p-5\`}>
+                <div className="flex items-center justify-between mb-4"><h3 className="font-bold">Credit report history</h3><a className="text-sm text-blue-500 hover:underline" href="https://www.cibil.com/freecibilscore" target="_blank" rel="noreferrer">Get official CIBIL report</a></div>
+                {creditProfiles.length === 0 ? <p className={\`${muted}\`}>Add or import a report to start tracking.</p> : creditProfiles.map((profile) => (
+                  <div key={profile.id} className="flex flex-wrap items-center justify-between gap-3 border-b last:border-b-0 py-3">
+                    <div><p className="font-semibold">{dateLabel(profile.report_date)} • CIBIL {profile.cibil_score ?? '—'}</p><p className={\`${muted} text-xs\`}>{profile.late_payments_12m || 0} late payment(s) in last 12 months • {profile.other_score_name || 'No other score'}</p></div>
+                    <div className="flex gap-3"><button onClick={() => openEditCredit(profile)} className="text-blue-500" aria-label="Edit credit report"><FaEdit /></button><button onClick={() => removeCredit(profile.id)} className="text-red-500" aria-label="Delete credit report"><FaTrash /></button></div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* IMPORT */}
+          {activeTab === 'Import' && (
+            <section>
+              <div className={\`${card} rounded-2xl border p-6\`}>
+                <h2 className="text-2xl font-bold">Excel Import</h2>
+                <p className={\`${muted} mt-2\`}>Use the FinWise workbook format to import transactions, assets, liabilities and credit-report data. Imported rows are added to your account; they do not replace existing data.</p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <button onClick={() => setShowImportModal(true)} className="px-4 py-3 rounded-xl bg-violet-500 text-white font-bold flex items-center gap-2"><FaUpload /> Upload Excel</button>
+                </div>
+                <div className={\`${muted} text-sm mt-5\`}>
+                  Sheets: <strong>Transactions</strong>, <strong>Assets</strong>, <strong>Liabilities</strong>, <strong>Credit_Profile</strong>.
+                </div>
+              </div>
             </section>
           )}
 
