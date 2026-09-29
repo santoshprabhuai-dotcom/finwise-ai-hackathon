@@ -422,6 +422,12 @@ const [budgetForm, setBudgetForm] = useState({
     window.speechSynthesis.speak(utterance)
   }
 
+  useEffect(() => {
+    if (showCoach && coachMessages.length === 0) {
+      speakText('I am FinWise AI Coach, your personal financial planning assistant. I can help with budgets, savings, goals, cash flow and spending. What financial goal would you like to work on today?')
+    }
+  }, [showCoach])
+
   const stopSpeaking = () => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
     window.speechSynthesis.cancel()
