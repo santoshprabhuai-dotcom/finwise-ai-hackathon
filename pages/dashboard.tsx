@@ -945,14 +945,14 @@ Description: ${description}`,
           messages: [{
             role: 'user',
             content: `Goal: ${goalForm.name.trim()}
-Current goal cost: ₹${target}
-Already saved: ₹${current}
+Current goal cost: ${formatMoney(target, goalForm.currency)}
+Already saved: ${formatMoney(current, goalForm.currency)}
 Target date: ${goalForm.target_date}
 Inflation assumption: ${inflation}%
 Illustrative annual return assumption: ${annualReturn}%
 Risk profile: ${goalForm.risk_profile}
-Calculated future goal cost: ₹${Math.ceil(futureTarget)}
-Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
+Calculated future goal cost: ${formatMoney(Math.ceil(futureTarget), goalForm.currency)}
+Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.currency)}`,
           }],
         }),
       })
@@ -960,7 +960,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       const advice = String(data.content || '').trim()
 
       const goalMessage =
-        `Inflation-adjusted target: ₹${Math.ceil(futureTarget).toLocaleString('en-IN')}. Monthly contribution: about ₹${Math.ceil(monthly).toLocaleString('en-IN')} at ${annualReturn}% assumed return. ${advice}`
+        `Inflation-adjusted target: ${formatMoney(Math.ceil(futureTarget), goalForm.currency)}. Monthly contribution: about ${formatMoney(Math.ceil(monthly), goalForm.currency)} at ${annualReturn}% assumed return. ${advice}`
 
       setGoalPlanMessage(goalMessage)
       speakText(goalMessage)
