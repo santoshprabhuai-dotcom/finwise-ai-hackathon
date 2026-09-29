@@ -2843,6 +2843,16 @@ ${spendingDNA
   </button>
 </div>
 
+              <div className={`mb-5 rounded-2xl border p-4 ${isDark ? 'bg-slate-900/60 border-slate-700' : 'bg-teal-50 border-teal-100'}`}>
+                <div className="flex items-start gap-3">
+                  <FaInfoCircle className="mt-1 text-teal-500" />
+                  <div className="text-sm">
+                    <p className="font-semibold">Budget workflow</p>
+                    <p className={muted}>Create a category limit here. Add the actual spending in Transactions using the same category. FinWise automatically links those transactions to the budget and updates the progress and alerts.</p>
+                  </div>
+                </div>
+              </div>
+
               {budgetRows.length === 0 ? (
                 <div className={`rounded-2xl border p-10 text-center ${card}`}>
                   <FaWallet className="mx-auto text-4xl text-teal-500 mb-4" />
