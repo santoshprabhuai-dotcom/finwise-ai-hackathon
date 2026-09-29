@@ -43,6 +43,12 @@ FinWise AI is an **intelligent personal finance management platform** designed t
 - 📁 Multi-format file support (PDF, Excel, CSV)
 - 🌐 International currency support
 
+**Multi-Currency**
+- 💱 Supports INR, USD, EUR, GBP, BHD, KWD, SAR, QAR, AED, CNY, BDT, PKR, CAD, SGD, AUD, NZD, ZAR and JPY
+- 🔄 Converts mixed-currency transactions, budgets, assets and liabilities into the user's selected base currency
+- 🧾 Stores the source currency with financial records so the original amount remains traceable
+- 🌐 Uses a server-side exchange-rate endpoint with validation and caching
+
 ---
 
 ## 🚀 Quick Start (5 Minutes)
