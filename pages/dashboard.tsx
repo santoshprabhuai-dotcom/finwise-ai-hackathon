@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { convertCurrency, formatMoney, SUPPORTED_CURRENCIES } from '@/lib/currency'
 import * as XLSX from 'xlsx'
 import {
   BarChart,
@@ -85,8 +86,7 @@ const COLORS = [
   '#64748B',
 ]
 
-const money = (value: number) =>
-  `₹${Math.round(value || 0).toLocaleString('en-IN')}`
+const money = (value: number, currency: string = 'INR') => formatMoney(value, currency)
 
 const EXPENSE_CATEGORIES = [
   'Housing',
@@ -192,6 +192,9 @@ const monthLabel = (value: string) => {
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [baseCurrency, setBaseCurrency] = useState('INR')
+  const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 1 })
+  const [fxUpdatedAt, setFxUpdatedAt] = useState('')
 
   const [transactions, setTransactions] = useState<any[]>([])
   const [budgets, setBudgets] = useState<any[]>([])
@@ -234,6 +237,7 @@ export default function Dashboard() {
     inflation_rate: '6',
     return_rate: '8',
     risk_profile: 'Balanced',
+    currency: 'INR',
   })
 
 const [showBudgetModal, setShowBudgetModal] = useState(false)
@@ -242,6 +246,7 @@ const [budgetForm, setBudgetForm] = useState({
   category: 'Food',
   limit_amount: '',
   month: new Date().toISOString().slice(0, 7),
+  currency: 'INR',
 })
 
   const [assetForm, setAssetForm] = useState({
@@ -251,6 +256,7 @@ const [budgetForm, setBudgetForm] = useState({
     purchase_value: '',
     as_of_date: new Date().toISOString().slice(0, 10),
     notes: '',
+    currency: 'INR',
   })
 
   const [liabilityForm, setLiabilityForm] = useState({
@@ -263,6 +269,7 @@ const [budgetForm, setBudgetForm] = useState({
     credit_limit: '',
     as_of_date: new Date().toISOString().slice(0, 10),
     notes: '',
+    currency: 'INR',
   })
 
   const [creditForm, setCreditForm] = useState({
@@ -274,6 +281,7 @@ const [budgetForm, setBudgetForm] = useState({
     total_credit_limit: '',
     total_credit_used: '',
     notes: '',
+    currency: 'INR',
   })
   
   const [transactionForm, setTransactionForm] = useState({
@@ -282,6 +290,7 @@ const [budgetForm, setBudgetForm] = useState({
     transaction_type: 'expense',
     category: 'Food',
     date: new Date().toISOString().split('T')[0],
+    currency: 'INR',
   })
 
   const [smartCategoryLoading, setSmartCategoryLoading] = useState(false)
@@ -315,6 +324,9 @@ const [budgetForm, setBudgetForm] = useState({
     ? 'bg-slate-950 border-slate-800'
     : 'bg-slate-950'
 
+  const money = (value: number, currency: string = baseCurrency) => formatMoney(value, currency)
+  const toBaseAmount = (value: number, currency: string = baseCurrency) => convertCurrency(Number(value || 0), currency, baseCurrency, fxRates)
+
   useEffect(() => {
     const storedTheme = window.localStorage.getItem('finwise-theme')
 
@@ -328,11 +340,26 @@ const [budgetForm, setBudgetForm] = useState({
       )
     }
 
+    const loadCurrencyRates = async () => {
+      try {
+        const response = await fetch('/api/exchange-rates')
+        const data = await response.json()
+        if (response.ok && data.rates) {
+          setFxRates(data.rates)
+          setFxUpdatedAt(data.updatedAt || '')
+        }
+      } catch (error) {
+        console.error('Could not load exchange rates', error)
+      }
+    }
+
     const checkUser = async () => {
       const { data } = await supabase.auth.getUser()
-
       if (data.user) {
         setUser(data.user)
+        const { data: profile } = await supabase.from('users').select('base_currency').eq('id', data.user.id).maybeSingle()
+        if (profile?.base_currency) setBaseCurrency(profile.base_currency)
+        await loadCurrencyRates()
         await loadDashboardData(data.user.id)
       } else {
         setLoading(false)
@@ -345,6 +372,21 @@ const [budgetForm, setBudgetForm] = useState({
   const changeTheme = (value: 'light' | 'dark') => {
     setTheme(value)
     window.localStorage.setItem('finwise-theme', value)
+  }
+
+  const changeBaseCurrency = async (currency: string) => {
+    if (!SUPPORTED_CURRENCIES.some((item) => item.code === currency)) return
+    setBaseCurrency(currency)
+    setTransactionForm((current) => ({ ...current, currency }))
+    setBudgetForm((current) => ({ ...current, currency }))
+    setGoalForm((current) => ({ ...current, currency }))
+    setAssetForm((current) => ({ ...current, currency }))
+    setLiabilityForm((current) => ({ ...current, currency }))
+    setCreditForm((current) => ({ ...current, currency }))
+    if (user) {
+      const { error } = await supabase.from('users').update({ base_currency: currency }).eq('id', user.id)
+      if (error) alert(error.message || 'Could not save base currency.')
+    }
   }
 
   const speakText = (message: string) => {
@@ -469,11 +511,11 @@ const [budgetForm, setBudgetForm] = useState({
   const stats = useMemo(() => {
     const income = monthTransactions
       .filter((t) => t.transaction_type === 'income')
-      .reduce((sum, t) => sum + Number(t.amount || 0), 0)
+      .reduce((sum, t) => sum + toBaseAmount(Number(t.amount || 0), t.currency || 'INR'), 0)
 
     const expenses = monthTransactions
       .filter((t) => t.transaction_type === 'expense')
-      .reduce((sum, t) => sum + Number(t.amount || 0), 0)
+      .reduce((sum, t) => sum + toBaseAmount(Number(t.amount || 0), t.currency || 'INR'), 0)
 
     const savings = income - expenses
 
@@ -485,7 +527,7 @@ const [budgetForm, setBudgetForm] = useState({
       netSavings: savings,
       savingsRate,
     }
-  }, [monthTransactions])
+  }, [monthTransactions, baseCurrency, fxRates]
 
   const healthScore = useMemo(() => {
     if (stats.totalIncome <= 0) return 0
@@ -526,18 +568,18 @@ const [budgetForm, setBudgetForm] = useState({
   const previousStats = useMemo(() => {
     const income = previousTransactions
       .filter((t) => t.transaction_type === 'income')
-      .reduce((sum, t) => sum + Number(t.amount || 0), 0)
+      .reduce((sum, t) => sum + toBaseAmount(Number(t.amount || 0), t.currency || 'INR'), 0)
 
     const expenses = previousTransactions
       .filter((t) => t.transaction_type === 'expense')
-      .reduce((sum, t) => sum + Number(t.amount || 0), 0)
+      .reduce((sum, t) => sum + toBaseAmount(Number(t.amount || 0), t.currency || 'INR'), 0)
 
     return {
       income,
       expenses,
       savings: income - expenses,
     }
-  }, [previousTransactions])
+  }, [previousTransactions, baseCurrency, fxRates]
 
   const incomeChange = useMemo(() => {
     if (!previousStats.income) return 0
@@ -609,7 +651,7 @@ const [budgetForm, setBudgetForm] = useState({
         const category = transaction.category || 'Others'
 
         categories[category] =
-          (categories[category] || 0) + Number(transaction.amount || 0)
+          (categories[category] || 0) + toBaseAmount(Number(transaction.amount || 0), transaction.currency || 'INR')
       })
 
     const total = Object.values(categories).reduce(
@@ -640,9 +682,7 @@ const [budgetForm, setBudgetForm] = useState({
     return budgets.map((budget) => {
       const category = budget.category || 'Other'
 
-      const limit = Number(
-        budget.limit_amount ?? budget.amount ?? budget.limit ?? budget.budget_amount ?? 0
-      )
+      const limit = toBaseAmount(Number(budget.limit_amount ?? budget.amount ?? budget.limit ?? budget.budget_amount ?? 0), budget.currency || 'INR')
 
       const spent = monthTransactions
         .filter(
@@ -652,7 +692,7 @@ const [budgetForm, setBudgetForm] = useState({
               String(category).toLowerCase()
         )
         .reduce((sum, transaction) => {
-          return sum + Number(transaction.amount || 0)
+          return sum + toBaseAmount(Number(transaction.amount || 0), transaction.currency || 'INR')
         }, 0)
 
       return {
@@ -663,16 +703,16 @@ const [budgetForm, setBudgetForm] = useState({
         percentage: limit > 0 ? Math.min((spent / limit) * 100, 100) : 0,
       }
     })
-  }, [budgets, monthTransactions])
+  }, [budgets, monthTransactions, baseCurrency, fxRates]
 
   const totalAssets = useMemo(
-    () => assets.reduce((sum, item) => sum + Number(item.current_value || 0), 0),
-    [assets]
+    () => assets.reduce((sum, item) => sum + toBaseAmount(Number(item.current_value || 0), item.currency || 'INR'), 0),
+    [assets, baseCurrency, fxRates]
   )
 
   const totalLiabilities = useMemo(
-    () => liabilities.reduce((sum, item) => sum + Number(item.outstanding_amount || 0), 0),
-    [liabilities]
+    () => liabilities.reduce((sum, item) => sum + toBaseAmount(Number(item.outstanding_amount || 0), item.currency || 'INR'), 0),
+    [liabilities, baseCurrency, fxRates]
   )
 
   const netWorth = totalAssets - totalLiabilities
@@ -942,6 +982,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       inflation_rate: Number(goalForm.inflation_rate || 6),
       return_rate: Number(goalForm.return_rate || 8),
       risk_profile: goalForm.risk_profile,
+      currency: goalForm.currency || baseCurrency,
     }
 
     const result = editingGoalId
@@ -961,6 +1002,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       inflation_rate: '6',
       return_rate: '8',
       risk_profile: 'Balanced',
+      currency: baseCurrency,
     })
     setEditingGoalId(null)
     setGoalPlanMessage('')
@@ -975,6 +1017,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       transaction_type: 'expense',
       category: 'Food',
       date: new Date().toISOString().split('T')[0],
+      currency: baseCurrency,
     })
     setEditingTransactionId(null)
     setSmartCategoryMessage('')
@@ -987,6 +1030,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       transaction_type: transaction.transaction_type || 'expense',
       category: transaction.category || (transaction.transaction_type === 'income' ? 'Salary' : 'Food'),
       date: String(transaction.date || '').slice(0, 10),
+      currency: transaction.currency || baseCurrency,
     })
     setEditingTransactionId(transaction.id)
     setShowTransactionModal(true)
@@ -1007,6 +1051,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       category: 'Food',
       limit_amount: '',
       month: new Date().toISOString().slice(0, 7),
+      currency: baseCurrency,
     })
     setEditingBudgetId(null)
   }
@@ -1016,6 +1061,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       category: budget.category || 'Food',
       limit_amount: String(budget.limit_amount ?? budget.limit ?? ''),
       month: String(budget.month || selectedMonth).slice(0, 7),
+      currency: budget.currency || baseCurrency,
     })
     setEditingBudgetId(budget.id)
     setShowBudgetModal(true)
@@ -1040,6 +1086,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       inflation_rate: String(goal.inflation_rate ?? 6),
       return_rate: String(goal.return_rate ?? 8),
       risk_profile: goal.risk_profile || 'Balanced',
+      currency: goal.currency || baseCurrency,
     })
     setEditingGoalId(goal.id)
     setGoalPlanMessage('')
@@ -1064,6 +1111,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       purchase_value: String(asset.purchase_value ?? ''),
       as_of_date: String(asset.as_of_date || '').slice(0, 10),
       notes: asset.notes || '',
+      currency: asset.currency || baseCurrency,
     })
     setEditingAssetId(asset.id)
     setShowAssetModal(true)
@@ -1090,6 +1138,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       credit_limit: String(item.credit_limit ?? ''),
       as_of_date: String(item.as_of_date || '').slice(0, 10),
       notes: item.notes || '',
+      currency: item.currency || baseCurrency,
     })
     setEditingLiabilityId(item.id)
     setShowLiabilityModal(true)
@@ -1115,6 +1164,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       total_credit_limit: String(profile.total_credit_limit ?? ''),
       total_credit_used: String(profile.total_credit_used ?? ''),
       notes: profile.notes || '',
+      currency: profile.currency || baseCurrency,
     })
     setEditingCreditId(profile.id)
     setShowCreditModal(true)
@@ -1140,6 +1190,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       purchase_value: assetForm.purchase_value ? Number(assetForm.purchase_value) : null,
       as_of_date: assetForm.as_of_date,
       notes: assetForm.notes.trim() || null,
+      currency: assetForm.currency || baseCurrency,
     }
     const result = editingAssetId
       ? await updateAsset(editingAssetId, payload)
@@ -1166,6 +1217,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       credit_limit: liabilityForm.credit_limit ? Number(liabilityForm.credit_limit) : null,
       as_of_date: liabilityForm.as_of_date,
       notes: liabilityForm.notes.trim() || null,
+      currency: liabilityForm.currency || baseCurrency,
     }
     const result = editingLiabilityId
       ? await updateLiability(editingLiabilityId, payload)
@@ -1196,6 +1248,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       total_credit_limit: creditForm.total_credit_limit ? Number(creditForm.total_credit_limit) : null,
       total_credit_used: creditForm.total_credit_used ? Number(creditForm.total_credit_used) : null,
       notes: creditForm.notes.trim() || null,
+      currency: creditForm.currency || baseCurrency,
     }
     const result = editingCreditId
       ? await updateCreditProfile(editingCreditId, payload)
@@ -1232,6 +1285,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
           transaction_type: type,
           category: String(row.category || (type === 'income' ? 'Other Income' : 'Other Expense')),
           date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date || new Date().toISOString().slice(0, 10)).slice(0, 10),
+          currency: String(row.currency || baseCurrency).toUpperCase(),
         })
         if (result.error) errors.push(`Transaction: ${result.error.message}`)
         else imported++
@@ -1321,6 +1375,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       transaction_type: transactionForm.transaction_type,
       category,
       date: transactionForm.date,
+      currency: transactionForm.currency || baseCurrency,
     }
 
     const result = editingTransactionId
@@ -1352,6 +1407,7 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
       month: `${budgetForm.month}-01`,
       spent_amount: 0,
       is_active: true,
+      currency: budgetForm.currency || baseCurrency,
     }
 
     const result = editingBudgetId
@@ -1397,9 +1453,9 @@ You are FinWise AI, a helpful personal finance coach.
 Give practical, clear and concise financial guidance.
 
 Current month: ${monthLabel(selectedMonth)}
-Income: ${money(stats.totalIncome)}
-Expenses: ${money(stats.totalExpenses)}
-Savings: ${money(stats.netSavings)}
+Income: ${money(stats.totalIncome, baseCurrency)}
+Expenses: ${money(stats.totalExpenses, baseCurrency)}
+Savings: ${money(stats.netSavings, baseCurrency)}
 Savings rate: ${stats.savingsRate.toFixed(1)}%
 
 Top spending categories:
@@ -1478,9 +1534,9 @@ Do not invent data.
               role: 'user',
               content: `
 Month: ${monthLabel(selectedMonth)}
-Income: ${money(stats.totalIncome)}
-Expenses: ${money(stats.totalExpenses)}
-Savings: ${money(stats.netSavings)}
+Income: ${money(stats.totalIncome, baseCurrency)}
+Expenses: ${money(stats.totalExpenses, baseCurrency)}
+Savings: ${money(stats.netSavings, baseCurrency)}
 Savings rate: ${stats.savingsRate.toFixed(1)}%
 
 Spending:
@@ -1887,6 +1943,10 @@ ${spendingDNA
                     </option>
                   )
                 })}
+              </select>
+
+              <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} title={fxUpdatedAt ? `FX rates updated ${fxUpdatedAt}` : 'Display currency'} className={`px-3 py-2 rounded-xl border text-sm max-w-[150px] ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
+                {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}
               </select>
 
               <button
@@ -2524,7 +2584,7 @@ ${spendingDNA
                               }`}
                             >
                               {income ? '+' : '-'}
-                              {money(Number(transaction.amount || 0))}
+                              {money(toBaseAmount(Number(transaction.amount || 0), transaction.currency || 'INR'))}
                             </div>
                           </div>
                         )
@@ -2904,7 +2964,7 @@ ${spendingDNA
                         </h3>
 
                         <p className={`text-sm mt-1 ${muted}`}>
-                          {money(current)} saved of {money(target)}
+                          {money(toBaseAmount(current, goal.currency || 'INR'))} saved of {money(toBaseAmount(target, goal.currency || 'INR'))}
                         </p>
 
                         <div
@@ -3046,7 +3106,7 @@ ${spendingDNA
                       {[...assets].sort((a, b) => Number(b.current_value || 0) - Number(a.current_value || 0)).slice(0, 5).map((asset) => (
                         <div key={asset.id} className={'flex items-center justify-between gap-3 py-2 border-b last:border-b-0 ' + (isDark ? 'border-slate-700' : 'border-gray-100')}>
                           <div className="min-w-0"><p className="font-semibold truncate">{asset.name}</p><p className={'text-xs ' + muted}>{asset.type} • {dateLabel(asset.as_of_date)}</p></div>
-                          <p className="font-bold text-emerald-500 shrink-0">{money(Number(asset.current_value || 0))}</p>
+                          <p className="font-bold text-emerald-500 shrink-0">{money(toBaseAmount(Number(asset.current_value || 0), asset.currency || 'INR'))}</p>
                         </div>
                       ))}
                     </div>
@@ -3065,7 +3125,7 @@ ${spendingDNA
                       {[...liabilities].sort((a, b) => Number(b.outstanding_amount || 0) - Number(a.outstanding_amount || 0)).slice(0, 5).map((item) => (
                         <div key={item.id} className={'flex items-center justify-between gap-3 py-2 border-b last:border-b-0 ' + (isDark ? 'border-slate-700' : 'border-gray-100')}>
                           <div className="min-w-0"><p className="font-semibold truncate">{item.name}</p><p className={'text-xs ' + muted}>{item.type} • {dateLabel(item.as_of_date)}</p></div>
-                          <p className="font-bold text-red-500 shrink-0">{money(Number(item.outstanding_amount || 0))}</p>
+                          <p className="font-bold text-red-500 shrink-0">{money(toBaseAmount(Number(item.outstanding_amount || 0), item.currency || 'INR'))}</p>
                         </div>
                       ))}
                     </div>
@@ -3111,7 +3171,7 @@ ${spendingDNA
                     {assets.length === 0 ? <p className={`${muted}`}>No assets added yet.</p> : assets.map((asset) => (
                       <div key={asset.id} className="flex items-center justify-between gap-3 border-b last:border-b-0 pb-3 last:pb-0">
                         <div><p className="font-semibold">{asset.name}</p><p className={`${muted} text-xs`}>{asset.type} • {dateLabel(asset.as_of_date)}</p></div>
-                        <div className="flex items-center gap-3"><strong className="text-emerald-500">{money(Number(asset.current_value || 0))}</strong><button onClick={() => openEditAsset(asset)} className="text-blue-500" aria-label="Edit asset"><FaEdit /></button><button onClick={() => removeAsset(asset.id)} className="text-red-500" aria-label="Delete asset"><FaTrash /></button></div>
+                        <div className="flex items-center gap-3"><strong className="text-emerald-500">{money(toBaseAmount(Number(asset.current_value || 0), asset.currency || 'INR'))}</strong><button onClick={() => openEditAsset(asset)} className="text-blue-500" aria-label="Edit asset"><FaEdit /></button><button onClick={() => removeAsset(asset.id)} className="text-red-500" aria-label="Delete asset"><FaTrash /></button></div>
                       </div>
                     ))}
                   </div>
@@ -3122,7 +3182,7 @@ ${spendingDNA
                     {liabilities.length === 0 ? <p className={`${muted}`}>No liabilities added yet.</p> : liabilities.map((item) => (
                       <div key={item.id} className="flex items-center justify-between gap-3 border-b last:border-b-0 pb-3 last:pb-0">
                         <div><p className="font-semibold">{item.name}</p><p className={`${muted} text-xs`}>{item.type} • {dateLabel(item.as_of_date)}</p></div>
-                        <div className="flex items-center gap-3"><strong className="text-red-500">{money(Number(item.outstanding_amount || 0))}</strong><button onClick={() => openEditLiability(item)} className="text-blue-500" aria-label="Edit liability"><FaEdit /></button><button onClick={() => removeLiability(item.id)} className="text-red-500" aria-label="Delete liability"><FaTrash /></button></div>
+                        <div className="flex items-center gap-3"><strong className="text-red-500">{money(toBaseAmount(Number(item.outstanding_amount || 0), item.currency || 'INR'))}</strong><button onClick={() => openEditLiability(item)} className="text-blue-500" aria-label="Edit liability"><FaEdit /></button><button onClick={() => removeLiability(item.id)} className="text-red-500" aria-label="Delete liability"><FaTrash /></button></div>
                       </div>
                     ))}
                   </div>
@@ -3380,6 +3440,10 @@ ${spendingDNA
                   )}
                 </select>
               </div>
+
+              <select value={transactionForm.currency} onChange={(e) => setTransactionForm({ ...transactionForm, currency: e.target.value })} className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
+                {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.name}</option>)}
+              </select>
 
               <input
                 type="date"
