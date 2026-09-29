@@ -39,6 +39,7 @@ export default async function handler(
       const transactions = transactionList.map((t: any) => ({
         user_id: userId,
         description: t.description || t.name || '',
+        currency: String(t.currency || 'INR').toUpperCase(),
         amount: parseFloat(t.amount || 0),
         category: t.category || 'Other',
         expense_type: t.expense_type || 'variable',
