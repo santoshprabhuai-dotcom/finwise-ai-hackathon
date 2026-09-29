@@ -966,7 +966,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
       speakText(goalMessage)
     } catch {
       const goalMessage =
-        `Inflation-adjusted target: ₹${Math.ceil(futureTarget).toLocaleString('en-IN')}. Monthly contribution: about ₹${Math.ceil(monthly).toLocaleString('en-IN')} at ${annualReturn}% assumed return.`
+        `Inflation-adjusted target: ${formatMoney(Math.ceil(futureTarget), goalForm.currency)}. Monthly contribution: about ${formatMoney(Math.ceil(monthly), goalForm.currency)} at ${annualReturn}% assumed return.`
 
       setGoalPlanMessage(goalMessage)
       speakText(goalMessage)
