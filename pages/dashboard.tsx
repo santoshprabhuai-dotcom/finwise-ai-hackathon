@@ -2911,107 +2911,72 @@ ${spendingDNA
 
           {/* GOALS */}
           {activeTab === 'Goals' && (
-            <section>
-              <div className="mb-6 flex items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold">Goals</h2>
-                  <p className={`text-sm ${muted}`}>
-                    Turn a goal into a clear target, deadline and monthly saving plan.
-                  </p>
+  <section>
+    <div className="mb-7 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+      <div>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><FaBullseye /></div>
+          <div>
+            <h2 className="text-2xl font-bold">Goals &amp; Financial Planning</h2>
+            <p className={`text-sm ${muted}`}>Turn important life goals into measurable targets, deadlines and monthly funding plans.</p>
+          </div>
+        </div>
+      </div>
+      <button onClick={() => { setEditingGoalId(null); setGoalPlanMessage(''); setGoalForm((current) => ({ ...current, currency: baseCurrency })); setShowGoalModal(true) }} className="px-4 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold flex items-center gap-2 shadow-sm">
+        <FaPlus /> Create Goal Plan
+      </button>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className={`${card} rounded-2xl border p-5`}><p className={`text-xs font-semibold uppercase tracking-wide ${muted}`}>Active Goals</p><p className="text-3xl font-black mt-2">{goals.length}</p><p className={`text-xs mt-1 ${muted}`}>Personal targets being tracked</p></div>
+      <div className={`${card} rounded-2xl border p-5`}><p className={`text-xs font-semibold uppercase tracking-wide ${muted}`}>Monthly Savings Capacity</p><p className="text-3xl font-black mt-2">{money(Math.max(0, stats.netSavings))}</p><p className={`text-xs mt-1 ${muted}`}>Based on current month cash flow</p></div>
+      <div className={`${card} rounded-2xl border p-5`}><p className={`text-xs font-semibold uppercase tracking-wide ${muted}`}>Planning Currency</p><p className="text-3xl font-black mt-2">{baseCurrency}</p><p className={`text-xs mt-1 ${muted}`}>All goal values are displayed in this currency</p></div>
+    </div>
+
+    {goals.length === 0 ? (
+      <div className={`${card} rounded-2xl border p-12 text-center`}>
+        <FaBullseye className="mx-auto text-4xl text-blue-500 mb-4" />
+        <h3 className="text-xl font-bold mb-2">Build your first financial goal</h3>
+        <p className={`max-w-xl mx-auto ${muted}`}>Examples include an emergency fund, home purchase, education, travel or retirement. FinWise can estimate the monthly contribution needed and explain the assumptions.</p>
+        <button onClick={() => { setEditingGoalId(null); setGoalPlanMessage(''); setGoalForm((current) => ({ ...current, currency: baseCurrency })); setShowGoalModal(true) }} className="mt-6 px-5 py-3 rounded-xl bg-blue-500 text-white font-bold">Start Planning</button>
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        {goals.map((goal) => {
+          const target = Number(goal.target_amount ?? goal.target ?? 0)
+          const current = Number(goal.current_amount ?? goal.saved_amount ?? goal.current ?? 0)
+          const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0
+          const remaining = Math.max(0, target - current)
+          const currency = goal.currency || baseCurrency
+          const targetDate = goal.target_date ? new Date(goal.target_date) : null
+          const monthsLeft = targetDate ? Math.max(1, (targetDate.getFullYear() - new Date().getFullYear()) * 12 + targetDate.getMonth() - new Date().getMonth()) : 0
+          const monthlyNeeded = monthsLeft ? remaining / monthsLeft : remaining
+          const onTrack = monthlyNeeded <= Math.max(0, stats.netSavings)
+          return (
+            <div key={goal.id} className={`${card} rounded-2xl border p-6 shadow-sm`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><FaBullseye /></div>
+                  <div><h3 className="font-bold text-lg">{goal.name || goal.title || 'Financial Goal'}</h3><p className={`text-xs ${muted}`}>{goal.target_date ? `Target: ${new Date(goal.target_date).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}` : 'No deadline set'}</p></div>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingGoalId(null)
-                    setGoalPlanMessage('')
-                    setShowGoalModal(true)
-                  }}
-                  className="px-4 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold flex items-center gap-2"
-                >
-                  <FaPlus />
-                  Plan a Goal
-                </button>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${onTrack ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{onTrack ? 'On track' : 'Needs attention'}</span>
               </div>
+              <div className="mt-6 flex items-end justify-between gap-4"><div><p className={`text-xs ${muted}`}>Progress</p><p className="text-2xl font-black">{Math.round(percentage)}%</p></div><div className="text-right"><p className={`text-xs ${muted}`}>Remaining</p><p className="font-bold">{money(toBaseAmount(remaining, currency))}</p></div></div>
+              <div className={`mt-3 h-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-gray-100'}`}><div className="h-3 rounded-full bg-blue-500" style={{width:`${percentage}%`}} /></div>
+              <div className="grid grid-cols-2 gap-3 mt-5">
+                <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}><p className={`text-xs ${muted}`}>Saved</p><p className="font-bold">{money(toBaseAmount(current,currency))}</p></div>
+                <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}><p className={`text-xs ${muted}`}>Monthly target</p><p className="font-bold">{money(toBaseAmount(monthlyNeeded,currency))}</p></div>
+              </div>
+              <div className="mt-5 flex items-center justify-between"><p className={`text-xs ${muted}`}>Planning currency: {currency}</p><div className="flex gap-3"><button type="button" onClick={() => openEditGoal(goal)} className="text-blue-500" aria-label="Edit goal"><FaEdit /></button><button type="button" onClick={() => removeGoal(goal.id)} className="text-red-500" aria-label="Delete goal"><FaTrash /></button></div></div>
+            </div>
+          )
+        })}
+      </div>
+    )}
+  </section>
+)}
 
-              {goals.length === 0 ? (
-                <div className={`rounded-2xl border p-10 text-center ${card}`}>
-                  <FaBullseye className="mx-auto text-4xl text-blue-500 mb-4" />
-
-                  <h3 className="text-xl font-bold mb-2">
-                    No goals yet
-                  </h3>
-
-                  <p className={muted}>
-                    Your saved financial goals will appear here.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {goals.map((goal) => {
-                    const target = Number(
-                      goal.target_amount ?? goal.target ?? 0
-                    )
-
-                    const current = Number(
-                      goal.current_amount ??
-                        goal.saved_amount ??
-                        goal.current ??
-                        0
-                    )
-
-                    const percentage =
-                      target > 0
-                        ? Math.min((current / target) * 100, 100)
-                        : 0
-
-                    return (
-                      <div
-                        key={goal.id}
-                        className={`rounded-2xl border p-6 ${card}`}
-                      >
-                        <div className="w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
-                          <FaBullseye />
-                        </div>
-
-                        <h3 className="font-bold text-lg">
-                          {goal.name ||
-                            goal.title ||
-                            'Financial Goal'}
-                        </h3>
-
-                        <p className={`text-sm mt-1 ${muted}`}>
-                          {money(toBaseAmount(current, goal.currency || 'INR'))} saved of {money(toBaseAmount(target, goal.currency || 'INR'))}
-                        </p>
-
-                        <div
-                          className={`mt-5 h-3 rounded-full ${
-                            isDark ? 'bg-slate-700' : 'bg-gray-100'
-                          }`}
-                        >
-                          <div
-                            className="h-3 rounded-full bg-blue-500"
-                            style={{
-                              width: `${percentage}%`,
-                            }}
-                          />
-                        </div>
-
-                        <div className="mt-2 text-right text-sm font-bold text-blue-500">
-                          {Math.round(percentage)}%
-                        </div>
-                        <div className="mt-4 flex justify-end gap-3">
-                          <button type="button" onClick={() => openEditGoal(goal)} className="text-blue-500" aria-label="Edit goal"><FaEdit /></button>
-                          <button type="button" onClick={() => removeGoal(goal.id)} className="text-red-500" aria-label="Delete goal"><FaTrash /></button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </section>
-          )}
-
-          {/* FINANCIAL POSITION */}
-          {activeTab === 'Financial Position' && (
+{activeTab === 'Financial Position' && (
             <section>
               <div className="mb-7">
                 <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
