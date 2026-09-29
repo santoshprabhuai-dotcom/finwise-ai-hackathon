@@ -367,7 +367,7 @@ const [budgetForm, setBudgetForm] = useState({
       const { data } = await supabase.auth.getUser()
       if (data.user) {
         setUser(data.user)
-        const { data: profile } = await supabase.from('users').select('base_currency').eq('id', data.user.id).maybeSingle()
+        const { data: profile } = await supabase.from('users').select('*').eq('id', data.user.id).maybeSingle()
         if (profile?.base_currency) setBaseCurrency(profile.base_currency)
         await supabase.from('users').update({ timezone }).eq('id', data.user.id)
         setAlertEmailEnabled(profile?.alert_email_enabled !== false)
