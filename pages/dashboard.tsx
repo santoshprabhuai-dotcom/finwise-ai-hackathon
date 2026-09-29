@@ -723,7 +723,7 @@ const [budgetForm, setBudgetForm] = useState({
         percentage: limit > 0 ? Math.min((spent / limit) * 100, 100) : 0,
       }
     })
-  }, [budgets, monthTransactions, baseCurrency, fxRates]
+  }, [budgets, monthTransactions, baseCurrency, fxRates])
 
   const totalAssets = useMemo(
     () => assets.reduce((sum, item) => sum + toBaseAmount(Number(item.current_value || 0), item.currency || 'INR'), 0),
