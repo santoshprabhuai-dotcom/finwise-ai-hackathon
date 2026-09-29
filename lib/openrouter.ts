@@ -35,9 +35,10 @@ export const generateFinancialInsights = async (financialData: any) => {
       role: 'user',
       content: `Analyze this financial data and provide insights:
       
-      Total Income: ₹${financialData.income}
-      Total Expenses: ₹${financialData.expenses}
-      Savings: ₹${financialData.savings}
+      Display Currency: ${financialData.currency || 'INR'}
+      Total Income: ${financialData.income} ${financialData.currency || 'INR'}
+      Total Expenses: ${financialData.expenses} ${financialData.currency || 'INR'}
+      Savings: ${financialData.savings} ${financialData.currency || 'INR'}
       Savings Rate: ${financialData.savingsRate}%
       
       Top Expense Categories: ${JSON.stringify(financialData.topCategories)}
@@ -113,9 +114,10 @@ export const generateCashflowForecast = async (historicalData: any) => {
       role: 'user',
       content: `Based on this historical financial data, forecast the next 6 months:
       
-      Average Monthly Income: ₹${historicalData.avgIncome}
-      Average Fixed Expenses: ₹${historicalData.avgFixed}
-      Average Variable Expenses: ₹${historicalData.avgVariable}
+      Display Currency: ${historicalData.currency || 'INR'}
+      Average Monthly Income: ${historicalData.avgIncome} ${historicalData.currency || 'INR'}
+      Average Fixed Expenses: ${historicalData.avgFixed} ${historicalData.currency || 'INR'}
+      Average Variable Expenses: ${historicalData.avgVariable} ${historicalData.currency || 'INR'}
       Trend: ${historicalData.trend}
       
       Generate realistic forecasts considering seasonal variations and trends.`,
