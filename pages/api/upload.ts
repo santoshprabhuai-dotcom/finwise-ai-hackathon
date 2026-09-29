@@ -33,6 +33,7 @@ export default async function handler(
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
+    const supportedCurrencies = new Set(['INR','USD','EUR','GBP','BHD','KWD','SAR','QAR','AED','CNY','BDT','PKR','CAD','SGD','AUD','NZD','ZAR','JPY'])
 
     // If it's a transaction list, save transactions to database
     if (transactionList && Array.isArray(transactionList)) {
