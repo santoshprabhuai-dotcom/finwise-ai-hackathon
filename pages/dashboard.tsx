@@ -193,6 +193,8 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [baseCurrency, setBaseCurrency] = useState('INR')
+  const [userTimezone, setUserTimezone] = useState('UTC')
+  const [greeting, setGreeting] = useState('Hello')
   const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 1 })
   const [fxUpdatedAt, setFxUpdatedAt] = useState('')
 
@@ -339,6 +341,11 @@ const [budgetForm, setBudgetForm] = useState({
           : 'light'
       )
     }
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    setUserTimezone(timezone)
+    const hour = Number(new Intl.DateTimeFormat('en', { hour: 'numeric', hour12: false, timeZone: timezone }).format(new Date()))
+    setGreeting(hour >= 5 && hour < 12 ? 'Good Morning' : hour >= 12 && hour < 17 ? 'Good Afternoon' : hour >= 17 && hour < 21 ? 'Good Evening' : 'Good Night')
 
     const loadCurrencyRates = async () => {
       try {
@@ -1448,7 +1455,10 @@ Calculated monthly contribution: ₹${Math.ceil(monthly)}`,
         },
         body: JSON.stringify({
           system: `
-You are FinWise AI, a helpful personal finance coach.
+You are FinWise AI, the user’s personal financial planning coach. Your name is FinWise AI Coach. Start the first assistant response naturally with “I’m FinWise AI Coach, your personal financial planning assistant.” Ask useful follow-up questions when financial details are missing. Give concise, actionable answers.
+
+User timezone: ${userTimezone}
+Base currency: ${baseCurrency}
 
 Give practical, clear and concise financial guidance.
 
@@ -1949,13 +1959,18 @@ ${spendingDNA
                 {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}
               </select>
 
-              <button
-                onClick={() => setShowTransactionModal(true)}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500 text-white font-semibold text-sm hover:bg-teal-600"
-              >
-                <FaPlus />
-                Add Transaction
-              </button>
+              {activeTab === 'Transactions' && (
+                <button
+                  onClick={() => {
+                    resetTransactionForm()
+                    setShowTransactionModal(true)
+                  }}
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500 text-white font-semibold text-sm hover:bg-teal-600"
+                >
+                  <FaPlus />
+                  Add Transaction
+                </button>
+              )}
 
               <button
                 onClick={() => setShowCoach(true)}
@@ -2196,7 +2211,7 @@ ${spendingDNA
                 className="mb-7"
               >
                 <h2 className="text-3xl font-bold">
-                  Good Morning,{' '}
+                  {greeting},{' '}
                   {user?.user_metadata?.full_name || 'Friend'} 👋
                 </h2>
 
@@ -3797,12 +3812,11 @@ ${spendingDNA
                   <FaRobot className="mx-auto text-4xl text-violet-500 mb-4" />
 
                   <p className="font-semibold">
-                    Hi! I&apos;m your FinWise AI coach.
+                    Hi! I&apos;m FinWise AI Coach — your personal financial planning assistant.
                   </p>
 
                   <p className="text-sm mt-2">
-                    Ask me how you can save more, reduce spending, or
-                    understand your money.
+                    Ask me about budgeting, saving, goals, cash flow, debt or spending. I&apos;ll ask questions when I need more context and give you a clear next step.
                   </p>
                 </div>
               )}
