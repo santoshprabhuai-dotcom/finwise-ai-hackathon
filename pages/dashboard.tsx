@@ -3279,6 +3279,14 @@ ${spendingDNA
                   </select>
                 </div>
 
+                <div className={`border-t mt-6 pt-6 ${isDark ? 'border-slate-700' : 'border-gray-100'}`}>
+                  <label className="block font-semibold mb-3">Display currency</label>
+                  <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
+                    {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.name}</option>)}
+                  </select>
+                  <p className={`text-xs mt-2 ${muted}`}>All dashboard totals, budgets and goals are converted into this base currency. Source transaction currency is retained.</p>
+                </div>
+
                 <div
                   className={`border-t mt-6 pt-6 ${
                     isDark ? 'border-slate-700' : 'border-gray-100'
