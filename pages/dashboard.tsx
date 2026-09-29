@@ -367,7 +367,7 @@ const [budgetForm, setBudgetForm] = useState({
       const { data } = await supabase.auth.getUser()
       if (data.user) {
         setUser(data.user)
-        const { data: profile } = await supabase.from('users').select('base_currency').eq('id', data.user.id).maybeSingle()
+        const { data: profile } = await supabase.from('users').select('*').eq('id', data.user.id).maybeSingle()
         if (profile?.base_currency) setBaseCurrency(profile.base_currency)
         await supabase.from('users').update({ timezone }).eq('id', data.user.id)
         setAlertEmailEnabled(profile?.alert_email_enabled !== false)
@@ -547,7 +547,7 @@ const [budgetForm, setBudgetForm] = useState({
       netSavings: savings,
       savingsRate,
     }
-  }, [monthTransactions, baseCurrency, fxRates]
+  }, [monthTransactions, baseCurrency, fxRates])
 
   const healthScore = useMemo(() => {
     if (stats.totalIncome <= 0) return 0
@@ -599,7 +599,7 @@ const [budgetForm, setBudgetForm] = useState({
       expenses,
       savings: income - expenses,
     }
-  }, [previousTransactions, baseCurrency, fxRates]
+  }, [previousTransactions, baseCurrency, fxRates])
 
   const incomeChange = useMemo(() => {
     if (!previousStats.income) return 0
@@ -723,7 +723,7 @@ const [budgetForm, setBudgetForm] = useState({
         percentage: limit > 0 ? Math.min((spent / limit) * 100, 100) : 0,
       }
     })
-  }, [budgets, monthTransactions, baseCurrency, fxRates]
+  }, [budgets, monthTransactions, baseCurrency, fxRates])
 
   const totalAssets = useMemo(
     () => assets.reduce((sum, item) => sum + toBaseAmount(Number(item.current_value || 0), item.currency || 'INR'), 0),

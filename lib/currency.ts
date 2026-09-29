@@ -28,10 +28,10 @@ export const getCurrencyMeta = (code?: string) =>
 
 export const formatMoney = (value: number, currency: string = 'INR') => {
   const code = SUPPORTED_CURRENCY_CODES.includes(currency as CurrencyCode) ? currency : 'INR'
+
   return new Intl.NumberFormat('en', {
     style: 'currency',
     currency: code,
-    maximumFractionDigits: code === 'JPY' ? 0 : 2,
   }).format(Number.isFinite(value) ? value : 0)
 }
 
