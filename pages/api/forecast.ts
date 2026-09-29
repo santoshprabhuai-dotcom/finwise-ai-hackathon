@@ -40,7 +40,8 @@ Provide ONLY a valid JSON response with 6 months of forecasts in this exact form
       "expected_income": 85000,
       "expected_fixed_expenses": 25000,
       "expected_variable_expenses": 18000,
-      "projected_savings": 42000
+      "projected_savings": 42000,
+      "currency": "INR"
     },
     ...more months...
   ]
@@ -48,9 +49,10 @@ Provide ONLY a valid JSON response with 6 months of forecasts in this exact form
 
     const userMessage = `Based on this historical financial data, forecast the next 6 months:
 
-Average Monthly Income: ₹${historicalData.avgIncome || 50000}
-Average Fixed Expenses: ₹${historicalData.avgFixed || 15000}
-Average Variable Expenses: ₹${historicalData.avgVariable || 12000}
+Display Currency: ${historicalData.currency || 'INR'}
+Average Monthly Income: ${historicalData.avgIncome || 50000} ${historicalData.currency || 'INR'}
+Average Fixed Expenses: ${historicalData.avgFixed || 15000} ${historicalData.currency || 'INR'}
+Average Variable Expenses: ${historicalData.avgVariable || 12000} ${historicalData.currency || 'INR'}
 Trend: ${historicalData.trend || 'stable'}
 Current Savings Rate: ${historicalData.savingsRate || 30}%
 
