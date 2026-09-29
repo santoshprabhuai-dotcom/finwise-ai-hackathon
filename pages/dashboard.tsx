@@ -547,7 +547,7 @@ const [budgetForm, setBudgetForm] = useState({
       netSavings: savings,
       savingsRate,
     }
-  }, [monthTransactions, baseCurrency, fxRates]
+  }, [monthTransactions, baseCurrency, fxRates])
 
   const healthScore = useMemo(() => {
     if (stats.totalIncome <= 0) return 0
@@ -599,7 +599,7 @@ const [budgetForm, setBudgetForm] = useState({
       expenses,
       savings: income - expenses,
     }
-  }, [previousTransactions, baseCurrency, fxRates]
+  }, [previousTransactions, baseCurrency, fxRates])
 
   const incomeChange = useMemo(() => {
     if (!previousStats.income) return 0
