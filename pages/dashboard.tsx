@@ -195,6 +195,9 @@ export default function Dashboard() {
   const [baseCurrency, setBaseCurrency] = useState('INR')
   const [userTimezone, setUserTimezone] = useState('UTC')
   const [greeting, setGreeting] = useState('Hello')
+  const [alertEmailEnabled, setAlertEmailEnabled] = useState(true)
+  const [alertWhatsappEnabled, setAlertWhatsappEnabled] = useState(false)
+  const [whatsappPhone, setWhatsappPhone] = useState('')
   const [fxRates, setFxRates] = useState<Record<string, number>>({ USD: 1 })
   const [fxUpdatedAt, setFxUpdatedAt] = useState('')
 
@@ -366,6 +369,9 @@ const [budgetForm, setBudgetForm] = useState({
         setUser(data.user)
         const { data: profile } = await supabase.from('users').select('base_currency').eq('id', data.user.id).maybeSingle()
         if (profile?.base_currency) setBaseCurrency(profile.base_currency)
+        setAlertEmailEnabled(profile?.alert_email_enabled !== false)
+        setAlertWhatsappEnabled(profile?.alert_whatsapp_enabled === true)
+        setWhatsappPhone(profile?.whatsapp_phone || '')
         await loadCurrencyRates()
         await loadDashboardData(data.user.id)
       } else {
@@ -3285,6 +3291,20 @@ ${spendingDNA
                     {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.name}</option>)}
                   </select>
                   <p className={`text-xs mt-2 ${muted}`}>All dashboard totals, budgets and goals are converted into this base currency. Source transaction currency is retained.</p>
+                </div>
+
+                <div className={`border-t mt-6 pt-6 ${isDark ? 'border-slate-700' : 'border-gray-100'}`}>
+                  <label className="block font-semibold mb-3">Budget alerts</label>
+                  <label className="flex items-center gap-3 text-sm mb-3">
+                    <input type="checkbox" checked={alertEmailEnabled} onChange={async (e) => { const enabled = e.target.checked; setAlertEmailEnabled(enabled); if (user) await supabase.from('users').update({ alert_email_enabled: enabled }).eq('id', user.id) }} />
+                    Email me when a budget is exceeded
+                  </label>
+                  <label className="flex items-center gap-3 text-sm mb-3">
+                    <input type="checkbox" checked={alertWhatsappEnabled} onChange={async (e) => { const enabled = e.target.checked; setAlertWhatsappEnabled(enabled); if (user) await supabase.from('users').update({ alert_whatsapp_enabled: enabled }).eq('id', user.id) }} />
+                    WhatsApp me when a budget is exceeded
+                  </label>
+                  <input value={whatsappPhone} onChange={(e) => setWhatsappPhone(e.target.value)} onBlur={async () => { if (user) await supabase.from('users').update({ whatsapp_phone: whatsappPhone.trim() || null }).eq('id', user.id) }} placeholder="+973XXXXXXXX" className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`} />
+                  <p className={`text-xs mt-2 ${muted}`}>Use international format. WhatsApp delivery requires the Twilio WhatsApp service to be configured in Vercel.</p>
                 </div>
 
                 <div
