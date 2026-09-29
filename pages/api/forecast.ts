@@ -41,7 +41,7 @@ Provide ONLY a valid JSON response with 6 months of forecasts in this exact form
       "expected_fixed_expenses": 25000,
       "expected_variable_expenses": 18000,
       "projected_savings": 42000,
-      "currency": "INR"
+      "currency": "${historicalData.currency || 'INR'}"
     },
     ...more months...
   ]
