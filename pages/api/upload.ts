@@ -37,6 +37,12 @@ export default async function handler(
 
     // If it's a transaction list, save transactions to database
     if (transactionList && Array.isArray(transactionList)) {
+      for (const item of transactionList) {
+        const currency = String(item.currency || 'INR').toUpperCase()
+        if (!supportedCurrencies.has(currency)) {
+          return res.status(400).json({ error: `Unsupported currency: ${currency}` })
+        }
+      }
       const transactions = transactionList.map((t: any) => ({
         user_id: userId,
         description: t.description || t.name || '',
