@@ -344,7 +344,7 @@ const [budgetForm, setBudgetForm] = useState({
 
   const money = (value: number, currency: string = baseCurrency) => formatMoney(Number.isFinite(value) ? Math.round(value) : 0, currency)
   const whole = (value: number) => Math.round(Number.isFinite(value) ? value : 0)
-  const percent = (value: number) => Math.round(Number.isFinite(value) ? value : 0)
+  const percent = (value: number) => Math.round((Number.isFinite(value) ? value : 0) * 100) / 100
   const toBaseAmount = (value: number, currency: string = baseCurrency) => convertCurrency(Number(value || 0), currency, baseCurrency, fxRates)
 
   useEffect(() => {
@@ -799,10 +799,12 @@ const [budgetForm, setBudgetForm] = useState({
   const currentFinancialYearTrend = useMemo(() => {
     const now = new Date()
     const startYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1
+    const currentKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0')
     const rows: Record<string, any> = {}
     for (let i = 0; i < 12; i++) {
       const d = new Date(startYear, 3 + i, 1)
       const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+      if (key > currentKey) continue
       rows[key] = { key, month: d.toLocaleDateString('en-IN', { month: 'short' }), income: 0, expenses: 0, savings: 0, savingsRate: 0 }
     }
     transactions.forEach((tx) => {
@@ -812,14 +814,46 @@ const [budgetForm, setBudgetForm] = useState({
       if (tx.transaction_type === 'income') rows[key].income += amount
       else rows[key].expenses += amount
     })
-    return Object.values(rows).map((row: any) => ({ ...row, savings: row.income - row.expenses, savingsRate: row.income > 0 ? (row.income - row.expenses) / row.income * 100 : 0 }))
+    return Object.values(rows).map((row: any) => ({
+      ...row,
+      savings: row.income - row.expenses,
+      savingsRate: row.income > 0 ? (row.income - row.expenses) / row.income * 100 : 0,
+    }))
   }, [transactions, baseCurrency, fxRates])
 
-  const waterfallData = useMemo(() => [
-    { name: 'Income', base: 0, value: Math.max(0, stats.totalIncome), display: stats.totalIncome },
-    { name: 'Expenses', base: Math.max(0, stats.totalIncome - stats.totalExpenses), value: stats.totalExpenses, display: -stats.totalExpenses },
-    { name: 'Net Savings', base: Math.min(0, stats.netSavings), value: Math.abs(stats.netSavings), display: stats.netSavings },
-  ], [stats])
+  const waterfallData = useMemo(() => {
+    const categoryTotals: Record<string, number> = {}
+    monthTransactions
+      .filter((tx) => tx.transaction_type === 'expense')
+      .forEach((tx) => {
+        const category = tx.category || 'Other Expense'
+        categoryTotals[category] = (categoryTotals[category] || 0) + toBaseAmount(Number(tx.amount || 0), tx.currency || 'INR')
+      })
+    const majorExpenses = Object.entries(categoryTotals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+    const totalExpense = Math.max(0, stats.totalExpenses)
+    const visibleExpense = majorExpenses.reduce((sum, [, value]) => sum + value, 0)
+    const rows: any[] = [
+      { name: 'Income', base: 0, value: Math.max(0, stats.totalIncome), display: stats.totalIncome, kind: 'income' },
+    ]
+    let remaining = Math.max(0, stats.totalIncome)
+    majorExpenses.forEach(([category, value]) => {
+      const expense = Math.min(value, remaining)
+      remaining -= expense
+      rows.push({ name: category, base: Math.max(0, remaining), value: expense, display: -expense, kind: 'expense' })
+    })
+    const otherExpense = Math.max(0, totalExpense - visibleExpense)
+    if (otherExpense > 0) {
+      const expense = Math.min(otherExpense, remaining)
+      remaining -= expense
+      rows.push({ name: 'Other expenses', base: Math.max(0, remaining), value: expense, display: -expense, kind: 'expense' })
+    }
+    const savings = stats.netSavings
+    if (savings >= 0) rows.push({ name: 'Net Savings', base: 0, value: savings, display: savings, kind: 'savings' })
+    else rows.push({ name: 'Net Savings', base: savings, value: Math.abs(savings), display: savings, kind: 'negative' })
+    return rows
+  }, [monthTransactions, stats, baseCurrency, fxRates])
 
   const totalAssets = useMemo(
     () => assets.reduce((sum, item) => sum + toBaseAmount(Number(item.current_value || 0), item.currency || 'INR'), 0),
@@ -2919,13 +2953,17 @@ ${spendingDNA
                       <YAxis stroke={isDark ? '#94a3b8' : '#6b7280'} />
                       <Tooltip formatter={(value: any, name: string, item: any) => [money(Number(item?.payload?.display ?? value)), 'Amount']} />
                       <Bar dataKey="base" stackId="waterfall" fill="transparent" />
-                      <Bar dataKey="value" stackId="waterfall" fill="#14b8a6" radius={[6,6,0,0]} />
+                      <Bar dataKey="value" stackId="waterfall" radius={[6,6,0,0]}>
+                        {waterfallData.map((entry: any, index: number) => (
+                          <Cell key={`waterfall-${index}`} fill={entry.kind === 'income' ? '#10b981' : entry.kind === 'expense' ? '#ef4444' : entry.kind === 'negative' ? '#f97316' : '#3b82f6'} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                   <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
                     <div><p className={muted}>Income</p><p className="font-black text-emerald-500">{money(stats.totalIncome)}</p></div>
-                    <div><p className={muted}>Expenses</p><p className="font-black text-red-500">{money(stats.totalExpenses)}</p></div>
-                    <div><p className={muted}>Net savings</p><p className="font-black text-blue-500">{money(stats.netSavings)}</p></div>
+                    <div><p className={muted}>Major expenses</p><p className="font-black text-red-500">{waterfallData.filter((x:any) => x.kind === 'expense').slice(0,4).map((x:any) => x.name).join(' • ') || 'None'}</p></div>
+                    <div><p className={muted}>Net savings</p><p className={`font-black ${stats.netSavings >= 0 ? 'text-blue-500' : 'text-orange-500'}`}>{money(stats.netSavings)}</p></div>
                   </div>
                 </div>
                 <div className={`rounded-2xl border p-6 ${card}`}>
