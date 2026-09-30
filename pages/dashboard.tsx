@@ -2020,7 +2020,7 @@ ${spendingDNA
       }`}
     >
       {/* Sidebar */}
-      <aside
+      <aside data-finwise-no-print
         className={`${sidebar} text-white w-64 min-h-screen hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r`}
       >
         <div className="p-6 border-b border-slate-800">
@@ -2105,7 +2105,7 @@ ${spendingDNA
       {/* Main */}
       <main className="lg:ml-64 flex-1 min-w-0">
         {/* Header */}
-        <header
+        <header data-finwise-no-print
           className={`sticky top-0 z-30 border-b ${
             isDark
               ? 'bg-slate-900/95 border-slate-800'
