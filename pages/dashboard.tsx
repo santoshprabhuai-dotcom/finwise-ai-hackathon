@@ -3662,6 +3662,11 @@ ${spendingDNA
                 <div className={`${card} rounded-2xl border p-5`}><p className={`${muted}`}>Credit Utilization</p><p className="text-4xl font-black mt-2">{latestCredit?.total_credit_limit ? Math.round(creditUtilization) + '%' : '—'}</p><p className={`${muted} text-xs mt-1`}>Based on the figures you entered/imported</p></div>
                 <div className={`${card} rounded-2xl border p-5`}><p className={`${muted}`}>FinWise Credit Health</p><p className="text-4xl font-black text-cyan-500 mt-2">{finwiseCreditHealth}/100</p><p className={`${muted} text-xs mt-1`}>Planning indicator — not a bureau score</p></div>
               </div>
+              <div className={`${card} rounded-2xl border p-5 mb-6`}>
+                <div className="flex items-center justify-between mb-4"><div><h3 className="font-bold">Credit Trend</h3><p className={`text-sm mt-1 ${muted}`}>Reported scores over time</p></div></div>
+                <ResponsiveContainer width="100%" height={240}><LineChart data={[...creditProfiles].reverse().map((p:any)=>({date:dateLabel(p.report_date),score:p.cibil_score || null}))}><CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} /><XAxis dataKey="date" /><YAxis domain={[300,900]} /><Tooltip /><Line type="monotone" dataKey="score" stroke="#06b6d4" strokeWidth={3} connectNulls /></LineChart></ResponsiveContainer>
+              </div>
+
               <div className={`${card} rounded-2xl border p-5`}>
                 <div className="flex items-center justify-between mb-4"><h3 className="font-bold">Credit report history</h3><a className="text-sm text-blue-500 hover:underline" href="https://www.cibil.com/freecibilscore" target="_blank" rel="noreferrer">Get official CIBIL report</a></div>
                 {creditProfiles.length === 0 ? <p className={`${muted}`}>Add or import a report to start tracking.</p> : creditProfiles.map((profile) => (
