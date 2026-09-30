@@ -2825,6 +2825,66 @@ ${spendingDNA
                 </div>
               </div>
 
+              {/* Professional cash-flow analytics */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+                <div className={`rounded-2xl border p-6 ${card}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div><h3 className="text-lg font-bold">Cash Flow Waterfall</h3><p className={`text-sm mt-1 ${muted}`}>Income → expenses → net savings for {monthLabel(selectedMonth)}</p></div>
+                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-600">{baseCurrency}</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={waterfallData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} />
+                      <XAxis dataKey="name" stroke={isDark ? '#94a3b8' : '#6b7280'} />
+                      <YAxis stroke={isDark ? '#94a3b8' : '#6b7280'} />
+                      <Tooltip formatter={(value: any, name: string, item: any) => [money(Number(item?.payload?.display ?? value)), 'Amount']} />
+                      <Bar dataKey="base" stackId="waterfall" fill="transparent" />
+                      <Bar dataKey="value" stackId="waterfall" fill="#14b8a6" radius={[6,6,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
+                    <div><p className={muted}>Income</p><p className="font-black text-emerald-500">{money(stats.totalIncome)}</p></div>
+                    <div><p className={muted}>Expenses</p><p className="font-black text-red-500">{money(stats.totalExpenses)}</p></div>
+                    <div><p className={muted}>Net savings</p><p className="font-black text-blue-500">{money(stats.netSavings)}</p></div>
+                  </div>
+                </div>
+                <div className={`rounded-2xl border p-6 ${card}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div><h3 className="text-lg font-bold">Current Financial Year Income & Expenses</h3><p className={`text-sm mt-1 ${muted}`}>April–March trend in reporting currency</p></div>
+                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600">FY</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={currentFinancialYearTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} />
+                      <XAxis dataKey="month" stroke={isDark ? '#94a3b8' : '#6b7280'} />
+                      <YAxis stroke={isDark ? '#94a3b8' : '#6b7280'} />
+                      <Tooltip formatter={(value: any) => money(Number(value))} />
+                      <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={3} dot={false} />
+                      <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} dot={false} />
+                      <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className={`rounded-2xl border p-6 mb-6 ${card}`}>
+                <div className="flex items-center justify-between mb-5">
+                  <div><h3 className="text-lg font-bold">Financial Year KPI Dashboard</h3><p className={`text-sm mt-1 ${muted}`}>Current income, expenses, net savings and savings rate</p></div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                  {[
+                    ['Current income', currentFinancialYearTrend.reduce((s: number, x: any) => s + x.income, 0), 'emerald'],
+                    ['Current expenses', currentFinancialYearTrend.reduce((s: number, x: any) => s + x.expenses, 0), 'red'],
+                    ['Net savings', currentFinancialYearTrend.reduce((s: number, x: any) => s + x.savings, 0), 'blue'],
+                    ['Average savings rate', currentFinancialYearTrend.filter((x: any) => x.income > 0).length ? currentFinancialYearTrend.filter((x: any) => x.income > 0).reduce((s: number, x: any) => s + x.savingsRate, 0) / currentFinancialYearTrend.filter((x: any) => x.income > 0).length : 0, 'violet'],
+                  ].map(([label,value,tone]) => (
+                    <div key={String(label)} className={`rounded-2xl p-4 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
+                      <p className={`text-xs font-semibold ${muted}`}>{label}</p>
+                      <p className={`text-2xl font-black mt-1 ${tone === 'red' ? 'text-red-500' : tone === 'emerald' ? 'text-emerald-500' : tone === 'blue' ? 'text-blue-500' : 'text-violet-500'}`}>{label === 'Average savings rate' ? percent(Number(value)) + '%' : money(Number(value))}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* AI Coach + Recent Activity */}
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <div
