@@ -296,6 +296,7 @@ const [budgetForm, setBudgetForm] = useState({
     description: '',
     amount: '',
     transaction_type: 'expense',
+    expense_type: 'variable',
     category: 'Food',
     date: new Date().toISOString().split('T')[0],
     currency: 'INR',
@@ -1145,6 +1146,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
       description: transaction.description || '',
       amount: String(transaction.amount || ''),
       transaction_type: transaction.transaction_type || 'expense',
+      expense_type: transaction.expense_type || 'variable',
       category: transaction.category || (transaction.transaction_type === 'income' ? 'Salary' : 'Food'),
       date: String(transaction.date || '').slice(0, 10),
       currency: transaction.currency || baseCurrency,
@@ -1505,7 +1507,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
       amount: localAmount,
       transaction_type: transactionForm.transaction_type,
       category,
-      expense_type: transactionForm.transaction_type === 'expense' ? 'variable' : 'other',
+      expense_type: transactionForm.transaction_type === 'expense' ? transactionForm.expense_type : 'other',
       date: transactionForm.date,
       currency: baseCurrency,
       foreign_amount: hasForeign ? Math.round(foreignAmount) : null,
@@ -3786,6 +3788,7 @@ ${spendingDNA
                     setTransactionForm({
                       ...transactionForm,
                       transaction_type: type,
+                      expense_type: type === 'expense' ? 'variable' : 'other',
                       category:
                         type === 'income' ? 'Other Income' : 'Other Expense',
                     })
@@ -3801,7 +3804,15 @@ ${spendingDNA
                   <option value="income">Income</option>
                 </select>
 
-                <select
+                {transactionForm.transaction_type === 'expense' && (
+                <select value={transactionForm.expense_type} onChange={(e) => setTransactionForm({...transactionForm, expense_type:e.target.value})} className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
+                  <option value="fixed">Fixed expense</option>
+                  <option value="variable">Variable expense</option>
+                  <option value="other">Other expense</option>
+                </select>
+              )}
+
+              <select
                   value={transactionForm.category}
                   onChange={(e) =>
                     setTransactionForm({
