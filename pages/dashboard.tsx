@@ -696,9 +696,9 @@ const [budgetForm, setBudgetForm] = useState({
       }
 
       if (transaction.transaction_type === 'income') {
-        grouped[key].income += Number(transaction.amount || 0)
+        grouped[key].income += toBaseAmount(Number(transaction.amount || 0), transaction.currency || 'INR')
       } else {
-        grouped[key].expenses += Number(transaction.amount || 0)
+        grouped[key].expenses += toBaseAmount(Number(transaction.amount || 0), transaction.currency || 'INR')
       }
     })
 
