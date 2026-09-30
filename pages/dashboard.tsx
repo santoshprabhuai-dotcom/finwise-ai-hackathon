@@ -1879,7 +1879,7 @@ Do not invent transactions or financial data.
     else if (activeTab === 'Budgets') summary = `This is Budgets. You have ${budgetRows.length} budgets. I compare actual spending with each category limit and can tell you which budgets are approaching their limits.`
     else if (activeTab === 'Goals') summary = `This is Goals. You have ${goals.length} goals. I can explain progress, remaining amounts and monthly funding targets.`
     else if (activeTab === 'Financial Position' || activeTab === 'Net Worth') summary = `This is your financial position. Total assets are ${money(totalAssets)}, liabilities are ${money(totalLiabilities)}, and net worth is ${money(netWorth)}.`
-    else if (activeTab === 'Credit Health') summary = `This is Credit Health. Your latest reported CIBIL score is ${latestCredit?.cibil_score ?? 'not entered'}, and credit utilization is ${latestCredit?.total_credit_limit ? Math.round(creditUtilization) + ' percent' : 'not available'}.`
+    else if (activeTab === 'Credit Health') summary = `This is Credit Health. Your latest reported CIBIL score is ${latestCredit?.cibil_score ?? 'not entered'}, and credit utilization is ${latestCredit?.total_credit_limit ? percent(creditUtilization) + ' percent' : 'not available'}.`
     else if (activeTab === 'AI Insights') summary = `This is AI Insights. I can analyze your income, expenses, savings and spending categories and turn them into practical next steps.`
     else if (activeTab === 'Import') summary = `This is Import. You can bring transaction and financial-position data in through the supported Excel workbook format.`
     else summary = `This is ${activeTab}. Ask me what you want to understand and I’ll walk you through it.`
@@ -2980,7 +2980,7 @@ ${spendingDNA
                           </Pie>
 
                           <Tooltip
-                            formatter={(value: any) => `${value}%`}
+                            formatter={(value: any) => `${percent(Number(value))}%`}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -3006,7 +3006,7 @@ ${spendingDNA
 
                             <div className="text-right flex-shrink-0">
                               <div className="text-sm font-bold">
-                                {item.value}%
+                                {percent(Number(item.value))}%
                               </div>
                               <div className={`text-xs ${muted}`}>
                                 {money(item.amount)}
@@ -3495,7 +3495,7 @@ ${spendingDNA
                         </div>
 
                         <span className="font-bold text-teal-500">
-                          {Math.round(budget.percentage)}%
+                          {percent(budget.percentage)}%
                         </span>
                         <div className="flex gap-2">
                           <button type="button" onClick={() => openEditBudget(budget)} className="text-blue-500" aria-label="Edit budget"><FaEdit /></button>
@@ -3685,7 +3685,7 @@ ${spendingDNA
                     <div className={'rounded-2xl p-4 ' + (isDark ? 'bg-slate-900' : 'bg-slate-50')}>
                       <div className="flex items-center justify-between gap-4">
                         <div><p className={'text-xs font-semibold uppercase tracking-wide ' + muted}>Net position</p><p className="text-xl font-black mt-1">{money(netWorth)}</p></div>
-                        <div className="text-right"><p className={'text-xs ' + muted}>Liabilities / Assets</p><p className="font-bold">{totalAssets > 0 ? Math.round((totalLiabilities / totalAssets) * 100) + '%' : '—'}</p></div>
+                        <div className="text-right"><p className={'text-xs ' + muted}>Liabilities / Assets</p><p className="font-bold">{totalAssets > 0 ? percent((totalLiabilities / totalAssets) * 100) + '%' : '—'}</p></div>
                       </div>
                     </div>
                   </div>
