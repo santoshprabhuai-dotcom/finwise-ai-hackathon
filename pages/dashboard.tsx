@@ -1640,7 +1640,20 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
         })
         const actionData = await actionResponse.json()
         if (actionResponse.ok && actionData.transaction) {
-          const tx = actionData.transaction
+          const rawTx = actionData.transaction
+          const tx = { ...rawTx }
+          if (tx.currency && tx.currency !== baseCurrency) {
+            tx.foreign_amount = Math.round(Number(tx.amount))
+            tx.foreign_currency = tx.currency
+            tx.exchange_rate = toBaseAmount(Number(tx.amount), tx.currency) / Number(tx.amount)
+            tx.local_amount = Math.round(toBaseAmount(Number(tx.amount), tx.currency))
+            tx.amount = tx.local_amount
+            tx.currency = baseCurrency
+            tx.fx_source = 'live FinWise FX'
+          } else {
+            tx.local_amount = Math.round(Number(tx.amount))
+            tx.currency = baseCurrency
+          }
           const matchingBudget = budgets.find((budget) =>
             String(budget.category || '').toLowerCase() === String(tx.category || '').toLowerCase() &&
             String(budget.month || '').slice(0, 7) === String(tx.date || '').slice(0, 7) &&
@@ -1815,14 +1828,26 @@ Do not invent transactions or financial data.
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Could not read the bill.')
       if (!data.transaction) throw new Error(`I could not reliably read the transaction amount from this document. ${(data.missing || []).join(', ')}`)
-      const tx = data.transaction
+      const tx = { ...data.transaction }
+      if (tx.currency && tx.currency !== baseCurrency) {
+        tx.foreign_amount = Math.round(Number(tx.amount))
+        tx.foreign_currency = tx.currency
+        tx.exchange_rate = toBaseAmount(Number(tx.amount), tx.currency) / Number(tx.amount)
+        tx.local_amount = Math.round(toBaseAmount(Number(tx.amount), tx.currency))
+        tx.amount = tx.local_amount
+        tx.currency = baseCurrency
+        tx.fx_source = 'live FinWise FX'
+      } else {
+        tx.local_amount = Math.round(Number(tx.amount))
+        tx.currency = baseCurrency
+      }
       const matchingBudget = budgets.find((budget) => String(budget.category || '').toLowerCase() === String(tx.category || '').toLowerCase() && String(budget.month || '').slice(0, 7) === String(tx.date || '').slice(0, 7) && budget.is_active !== false)
       const limit = matchingBudget ? toBaseAmount(Number(matchingBudget.limit_amount || 0), matchingBudget.currency || baseCurrency) : 0
       const spent = matchingBudget ? monthTransactions.filter((item) => item.transaction_type === 'expense' && String(item.category || '').toLowerCase() === String(tx.category || '').toLowerCase()).reduce((sum, item) => sum + toBaseAmount(Number(item.amount || 0), item.currency || baseCurrency), 0) : 0
       setPendingTransaction(tx)
       setPendingTransactionBudget({ budgeted: Boolean(matchingBudget), limit, spent, projected: spent + toBaseAmount(Number(tx.amount || 0), tx.currency || baseCurrency), remaining: Math.max(0, limit - spent - toBaseAmount(Number(tx.amount || 0), tx.currency || baseCurrency)) })
       setShowCoach(true)
-      setCoachMessages((current) => [...current, { role: 'assistant', content: `I read ${file.name}. Please review and confirm before I save it.\n\n${tx.description} — ${money(Number(tx.amount), tx.currency || baseCurrency)}\nCategory: ${tx.category}\nDate: ${tx.date}\nBudget: ${matchingBudget ? 'Budgeted' : 'Not budgeted'}` }])
+      setCoachMessages((current) => [...current, { role: 'assistant', content: `I read ${file.name}. Please review and confirm before I save it.\n\n${tx.description} — ${tx.foreign_currency ? `${tx.foreign_currency} ${money(Number(tx.foreign_amount), tx.foreign_currency)} → ${money(Number(tx.local_amount ?? tx.amount), baseCurrency)}` : money(Number(tx.local_amount ?? tx.amount), baseCurrency)}\nCategory: ${tx.category}\nDate: ${tx.date}\nBudget: ${matchingBudget ? 'Budgeted' : 'Not budgeted'}` }])
       speakText('I read the bill and prepared a transaction. Please review and confirm it before I save it.')
     } catch (error: any) {
       alert(error?.message || 'Could not read this bill or invoice.')
