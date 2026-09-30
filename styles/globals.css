@@ -147,11 +147,25 @@ body.dark ::-webkit-scrollbar-thumb:hover {
 /* Print Styles */
 @media print {
   body {
-    background: white;
+    background: white !important;
+    color: black !important;
   }
-  
+
+  aside,
+  header,
+  [data-finwise-robot],
+  [data-finwise-no-print],
   .no-print {
-    display: none;
+    display: none !important;
+  }
+
+  main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  @page {
+    margin: 12mm;
   }
 }
 
