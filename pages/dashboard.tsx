@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { convertCurrency, formatMoney, SUPPORTED_CURRENCIES } from '@/lib/currency'
 import * as XLSX from 'xlsx'
+import { FINWISE_LOGO_DATA } from '@/lib/finwise-logo'
 import {
   BarChart,
   Bar,
@@ -2279,15 +2280,8 @@ ${spendingDNA
         className={`${sidebar} text-white w-64 min-h-screen hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r`}
       >
         <div className="p-6 border-b border-slate-800">
-          <div className="rounded-2xl border border-cyan-400/60 bg-slate-950 px-4 py-3 shadow-lg">
-            <svg viewBox="0 0 360 100" className="w-full h-auto" role="img" aria-label="FinWise AI">
-              <rect x="2" y="2" width="356" height="96" rx="20" fill="#06152f" stroke="#14b8ff" strokeWidth="4"/>
-              <path d="M42 69 L74 46 L103 61 L145 27" fill="none" stroke="#f5b72f" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M142 28 L143 45 L160 39" fill="none" stroke="#f5b72f" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-              <rect x="34" y="58" width="12" height="18" rx="3" fill="#f5b72f"/><rect x="58" y="49" width="12" height="27" rx="3" fill="#f5b72f"/><rect x="82" y="55" width="12" height="21" rx="3" fill="#f5b72f"/>
-              <text x="174" y="63" fontSize="38" fontWeight="800" fill="white">FinWise</text>
-              <text x="309" y="63" fontSize="38" fontWeight="900" fill="#f5b72f">AI</text>
-            </svg>
+          <div className="rounded-2xl overflow-hidden bg-slate-950 shadow-lg">
+            <img src={FINWISE_LOGO_DATA} alt="FinWise AI" className="w-full h-auto object-contain" />
           </div>
         </div>
 
