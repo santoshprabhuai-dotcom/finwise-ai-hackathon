@@ -1701,7 +1701,7 @@ Current month: ${monthLabel(selectedMonth)}
 Income: ${money(stats.totalIncome, baseCurrency)}
 Expenses: ${money(stats.totalExpenses, baseCurrency)}
 Savings: ${money(stats.netSavings, baseCurrency)}
-Savings rate: ${stats.savingsRate}%
+Savings rate: ${percent(stats.savingsRate)}%
 
 Top spending categories:
 ${spendingDNA
@@ -1759,7 +1759,7 @@ Do not invent transactions or financial data.
     setIsTouring(true)
     const name = profileName || 'there'
     let summary = ''
-    if (activeTab === 'Overview') summary = `${greeting}, ${name}. This is your financial overview. Your income is ${money(stats.totalIncome)}, expenses are ${money(stats.totalExpenses)}, net savings are ${money(stats.netSavings)}, and your savings rate is ${stats.savingsRate} percent. Your largest spending category is ${spendingDNA[0]?.name || 'not available yet'}. I can explain any section if you ask.`
+    if (activeTab === 'Overview') summary = `${greeting}, ${name}. This is your financial overview. Your income is ${money(stats.totalIncome)}, expenses are ${money(stats.totalExpenses)}, net savings are ${money(stats.netSavings)}, and your savings rate is ${percent(stats.savingsRate)} percent. Your largest spending category is ${spendingDNA[0]?.name || 'not available yet'}. I can explain any section if you ask.`
     else if (activeTab === 'Transactions') summary = `This is Transactions. You have ${monthTransactions.length} transactions for ${monthLabel(selectedMonth)}. I can add, edit, categorize, import, export or explain them. You can also upload a bill or invoice and I can prepare a transaction for your confirmation.`
     else if (activeTab === 'Budgets') summary = `This is Budgets. You have ${budgetRows.length} budgets. I compare actual spending with each category limit and can tell you which budgets are approaching their limits.`
     else if (activeTab === 'Goals') summary = `This is Goals. You have ${goals.length} goals. I can explain progress, remaining amounts and monthly funding targets.`
@@ -1886,7 +1886,7 @@ Month: ${monthLabel(selectedMonth)}
 Income: ${money(stats.totalIncome, baseCurrency)}
 Expenses: ${money(stats.totalExpenses, baseCurrency)}
 Savings: ${money(stats.netSavings, baseCurrency)}
-Savings rate: ${stats.savingsRate}%
+Savings rate: ${percent(stats.savingsRate)}%
 
 Spending:
 ${spendingDNA
@@ -1925,7 +1925,7 @@ ${spendingDNA
       speakText(insightList.join(' '))
     } catch {
       setInsights([
-        `Your savings rate is ${stats.savingsRate}% this month.`,
+        `Your savings rate is ${percent(stats.savingsRate)}% this month.`,
         `Your total expenses are ${money(stats.totalExpenses)}.`,
         spendingDNA.length
           ? `${spendingDNA[0].name} is your largest spending category.`
@@ -2683,7 +2683,7 @@ ${spendingDNA
 
                   <MetricCard
                     title="Savings Rate"
-                    value={`${stats.savingsRate}%`}
+                    value={`${percent(stats.savingsRate)}%`}
                     icon={<FaPercent />}
                     iconClass="text-violet-500"
                     change={
