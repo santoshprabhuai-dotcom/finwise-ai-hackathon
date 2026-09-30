@@ -1791,6 +1791,19 @@ Do not invent transactions or financial data.
     XLSX.writeFile(workbook, `finwise-transactions-${selectedMonth}.xlsx`)
   }
 
+  const downloadWorkbook = (rows: any[], sheet: string, filename: string) => {
+    const worksheet = XLSX.utils.json_to_sheet(rows)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheet)
+    XLSX.writeFile(workbook, filename)
+  }
+
+  const downloadBudgetsExcel = () => downloadWorkbook(budgetRows.map((b:any)=>({Category:b.category,Month:b.month,Limit:whole(b.limit),Spent:whole(b.spent),Percentage:percent(b.percentage),Currency:baseCurrency})), 'Budgets', `finwise-budgets-${selectedMonth}.xlsx`)
+  const downloadGoalsExcel = () => downloadWorkbook(goals.map((g:any)=>({Goal:g.name || g.title,Target:whole(g.target_amount),Saved:whole(g.current_amount),TargetDate:g.target_date || '',Risk:g.risk_profile || '',Currency:g.currency || baseCurrency})), 'Goals', 'finwise-goals.xlsx')
+  const downloadAssetsExcel = () => downloadWorkbook(assets.map((a:any)=>({Asset:a.name,Type:a.type,CurrentValue:whole(a.current_value),PurchaseValue:a.purchase_value == null ? '' : whole(a.purchase_value),AsOfDate:a.as_of_date || '',Currency:a.currency || baseCurrency,Notes:a.notes || ''})), 'Assets', 'finwise-assets.xlsx')
+  const downloadLiabilitiesExcel = () => downloadWorkbook(liabilities.map((a:any)=>({Liability:a.name,Type:a.type,Outstanding:whole(a.outstanding_amount),Original: a.original_amount == null ? '' : whole(a.original_amount),InterestRate:a.interest_rate || '',MonthlyPayment:a.monthly_payment == null ? '' : whole(a.monthly_payment),CreditLimit:a.credit_limit == null ? '' : whole(a.credit_limit),AsOfDate:a.as_of_date || '',Currency:a.currency || baseCurrency,Notes:a.notes || ''})), 'Liabilities', 'finwise-liabilities.xlsx')
+  const downloadCreditExcel = () => downloadWorkbook(creditProfiles.map((a:any)=>({ReportDate:a.report_date || '',CIBIL:a.cibil_score || '',OtherScore:a.other_score || '',OtherScoreName:a.other_score_name || '',LatePayments12m:a.late_payments_12m || 0,CreditLimit:a.total_credit_limit == null ? '' : whole(a.total_credit_limit),CreditUsed:a.total_credit_used == null ? '' : whole(a.total_credit_used),Currency:a.currency || baseCurrency,Notes:a.notes || ''})), 'Credit_Profile', 'finwise-credit-profile.xlsx')
+
   const printTransactions = () => {
     const previousTitle = document.title
     document.title = `FinWise Transactions ${selectedMonth}`
