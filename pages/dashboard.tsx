@@ -3845,7 +3845,7 @@ ${spendingDNA
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className={`${card} rounded-2xl border p-5`}><p className={`${muted}`}>Reported CIBIL Score</p><p className="text-4xl font-black mt-2">{latestCredit?.cibil_score ?? '—'}</p><p className={`${muted} text-xs mt-1`}>Official bureau score entered from your report</p></div>
-                <div className={`${card} rounded-2xl border p-5`}><p className={`${muted}`}>Credit Utilization</p><p className="text-4xl font-black mt-2">{latestCredit?.total_credit_limit ? Math.round(creditUtilization) + '%' : '—'}</p><p className={`${muted} text-xs mt-1`}>Based on the figures you entered/imported</p></div>
+                <div className={`${card} rounded-2xl border p-5`}><p className={`${muted}`}>Credit Utilization</p><p className="text-4xl font-black mt-2">{latestCredit?.total_credit_limit ? percent(creditUtilization) + '%' : '—'}</p><p className={`${muted} text-xs mt-1`}>Based on the figures you entered/imported</p></div>
                 <div className={`${card} rounded-2xl border p-5`}><p className={`${muted}`}>FinWise Credit Health</p><p className="text-4xl font-black text-cyan-500 mt-2">{finwiseCreditHealth}/100</p><p className={`${muted} text-xs mt-1`}>Planning indicator — not a bureau score</p></div>
               </div>
               <div className={`${card} rounded-2xl border p-5 mb-6`}>
