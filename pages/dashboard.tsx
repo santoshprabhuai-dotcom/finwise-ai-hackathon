@@ -3666,94 +3666,73 @@ ${spendingDNA
           {activeTab === 'Settings' && (
             <section>
               <div className="mb-6">
-                <h2 className="text-2xl font-bold">Settings</h2>
-                <p className={`text-sm ${muted}`}>
-                  Manage your FinWise AI preferences.
-                </p>
+                <h2 className="text-2xl font-bold">Profile & Settings</h2>
+                <p className={`text-sm ${muted}`}>Build an exhaustive profile so Sam can personalize planning, goals, budgets, insights and cash-flow analysis.</p>
+              </div>
+              <div className={`rounded-2xl border p-6 ${card}`}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    ['full_name','Full name'],['phone','Phone'],['country','Country'],['occupation','Occupation'],
+                    ['employer','Employer'],['city','City'],['state','State / Province'],['postal_code','Postal code'],
+                    ['address_line1','Address line 1'],['address_line2','Address line 2'],['annual_income','Annual income'],['dependents','Dependents']
+                  ].map(([key,label]) => (
+                    <div key={key} className={key.startsWith('address') ? 'md:col-span-2' : ''}>
+                      <label className={`block text-xs font-semibold mb-1 ${muted}`}>{label}</label>
+                      <input
+                        type={key === 'annual_income' || key === 'dependents' ? 'number' : key === 'phone' ? 'tel' : 'text'}
+                        value={(profileForm as any)[key]}
+                        onChange={(e) => setProfileForm({...profileForm, [key]: e.target.value})}
+                        className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
+                      />
+                    </div>
+                  ))}
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1 ${muted}`}>Date of birth</label>
+                    <input type="date" value={profileForm.date_of_birth} onChange={(e) => setProfileForm({...profileForm,date_of_birth:e.target.value})} className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`} />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1 ${muted}`}>Reporting currency</label>
+                    <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
+                      {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={`block text-xs font-semibold mb-1 ${muted}`}>Financial profile notes</label>
+                    <textarea value={profileForm.financial_profile_notes} onChange={(e) => setProfileForm({...profileForm,financial_profile_notes:e.target.value})} rows={4} placeholder="Recurring obligations, dependants, income sources, planning priorities and preferences for Sam." className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`} />
+                  </div>
+                </div>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button type="button" onClick={saveProfile} disabled={profileSaving} className="px-5 py-3 rounded-xl bg-teal-500 text-white font-bold">{profileSaving ? 'Saving…' : 'Save Complete Profile'}</button>
+                  <button type="button" onClick={() => { setShowCoach(true); setCoachInput('Review my profile and tell me what information is missing for a professional financial plan.'); }} className="px-5 py-3 rounded-xl border font-bold">Ask Sam to Review Profile</button>
+                </div>
               </div>
 
-              <div className={`rounded-2xl border p-6 max-w-2xl ${card}`}>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 text-white flex items-center justify-center text-xl font-bold">
-                    {user?.email?.[0]?.toUpperCase() || 'U'}
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      {user?.user_metadata?.full_name ||
-                        'FinWise User'}
-                    </h3>
-
-                    <p className={`text-sm ${muted}`}>
-                      {user?.email}
-                    </p>
-                  </div>
-                </div>
-
-                <div
-                  className={`border-t pt-6 ${
-                    isDark ? 'border-slate-700' : 'border-gray-100'
-                  }`}
-                >
-                  <label className="block font-semibold mb-3">
-                    Appearance
-                  </label>
-
-                  <select
-                    value={theme}
-                    onChange={(e) =>
-                      changeTheme(
-                        e.target.value as 'light' | 'dark'
-                      )
-                    }
-                    className={`w-full px-4 py-3 rounded-xl border ${
-                      isDark
-                        ? 'bg-slate-900 border-slate-700'
-                        : 'bg-white border-gray-200'
-                    }`}
-                  >
-                    <option value="light">☀️ Light</option>
-                    <option value="dark">🌙 Dark</option>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 mt-6">
+                <div className={`rounded-2xl border p-5 ${card}`}>
+                  <h3 className="font-bold">Appearance</h3>
+                  <select value={theme} onChange={(e)=>changeTheme(e.target.value as 'light'|'dark')} className={`w-full mt-3 px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
+                    <option value="light">Light</option><option value="dark">Dark</option>
                   </select>
                 </div>
-
-                <div className={`border-t mt-6 pt-6 ${isDark ? 'border-slate-700' : 'border-gray-100'}`}>
-                  <label className="block font-semibold mb-3">Display currency</label>
-                  <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
-                    {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} — {currency.name}</option>)}
-                  </select>
-                  <p className={`text-xs mt-2 ${muted}`}>All dashboard totals, budgets and goals are converted into this base currency. Source transaction currency is retained.</p>
+                <div className={`rounded-2xl border p-5 ${card}`}>
+                  <h3 className="font-bold">Budget alerts</h3>
+                  <label className="flex gap-2 mt-3 text-sm"><input type="checkbox" checked={alertEmailEnabled} onChange={async (e)=>{const enabled=e.target.checked;setAlertEmailEnabled(enabled);if(user)await supabase.from('users').update({alert_email_enabled:enabled}).eq('id',user.id)}}/> Email when budget is exceeded</label>
+                  <label className="flex gap-2 mt-3 text-sm"><input type="checkbox" checked={alertWhatsappEnabled} onChange={async (e)=>{const enabled=e.target.checked;setAlertWhatsappEnabled(enabled);if(user)await supabase.from('users').update({alert_whatsapp_enabled:enabled}).eq('id',user.id)}}/> WhatsApp when budget is exceeded</label>
+                  <input value={whatsappPhone} onChange={(e)=>setWhatsappPhone(e.target.value)} onBlur={async()=>{if(user)await supabase.from('users').update({whatsapp_phone:whatsappPhone.trim()||null}).eq('id',user.id)}} placeholder="+973..." className={`w-full mt-3 px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`} />
                 </div>
-
-                <div className={`border-t mt-6 pt-6 ${isDark ? 'border-slate-700' : 'border-gray-100'}`}>
-                  <label className="block font-semibold mb-3">Budget alerts</label>
-                  <label className="flex items-center gap-3 text-sm mb-3">
-                    <input type="checkbox" checked={alertEmailEnabled} onChange={async (e) => { const enabled = e.target.checked; setAlertEmailEnabled(enabled); if (user) await supabase.from('users').update({ alert_email_enabled: enabled }).eq('id', user.id) }} />
-                    Email me when a budget is exceeded
-                  </label>
-                  <label className="flex items-center gap-3 text-sm mb-3">
-                    <input type="checkbox" checked={alertWhatsappEnabled} onChange={async (e) => { const enabled = e.target.checked; setAlertWhatsappEnabled(enabled); if (user) await supabase.from('users').update({ alert_whatsapp_enabled: enabled }).eq('id', user.id) }} />
-                    WhatsApp me when a budget is exceeded
-                  </label>
-                  <input value={whatsappPhone} onChange={(e) => setWhatsappPhone(e.target.value)} onBlur={async () => { if (user) await supabase.from('users').update({ whatsapp_phone: whatsappPhone.trim() || null }).eq('id', user.id) }} placeholder="+973XXXXXXXX" className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`} />
-                  <p className={`text-xs mt-2 ${muted}`}>Use international format. WhatsApp delivery requires the Twilio WhatsApp service to be configured in Vercel.</p>
+                <div className={`rounded-2xl border p-5 ${card}`}>
+                  <h3 className="font-bold">Sam controls</h3>
+                  <p className={`text-sm mt-2 ${muted}`}>Sam can read the current page, accept voice questions, speak responses and stop immediately when you say “stop”.</p>
+                  <div className="flex gap-2 mt-4"><button onClick={readCurrentPage} className="px-3 py-2 rounded-lg bg-cyan-500 text-white font-bold">Read page</button><button onClick={stopSpeaking} className="px-3 py-2 rounded-lg bg-red-500 text-white font-bold">Stop</button></div>
                 </div>
-
-                <div
-                  className={`border-t mt-6 pt-6 ${
-                    isDark ? 'border-slate-700' : 'border-gray-100'
-                  }`}
-                >
-                  <button
-                    onClick={handleLogout}
-                    className="w-full px-4 py-3 rounded-xl border border-red-200 text-red-500 font-semibold hover:bg-red-50"
-                  >
-                    Sign out of FinWise AI
-                  </button>
-                </div>
+              </div>
+              <div className={`mt-6 rounded-2xl border p-5 ${card}`}>
+                <h3 className="font-bold">Credit report privacy</h3>
+                <p className={`text-sm mt-2 ${muted}`}>PAN and bureau authentication should be entered only on the official bureau site. FinWise stores reported score data and links you to official providers rather than scraping private credit records.</p>
               </div>
             </section>
           )}
+
         </div>
       </main>
 
