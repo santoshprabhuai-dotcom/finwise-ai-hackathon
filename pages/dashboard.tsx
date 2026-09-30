@@ -3267,16 +3267,7 @@ ${spendingDNA
     </p>
   </div>
 
-  <button
-    onClick={() => {
-      resetBudgetForm()
-      setShowBudgetModal(true)
-    }}
-    className="px-4 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold flex items-center gap-2"
-  >
-    <FaPlus />
-    Add Budget
-  </button>
+  <div className="flex flex-wrap gap-2"><button onClick={() => { resetBudgetForm(); setShowBudgetModal(true) }} className="px-4 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold flex items-center gap-2"><FaPlus /> Add Budget</button><button onClick={downloadBudgetsExcel} className="px-4 py-3 rounded-xl border font-bold flex items-center gap-2"><FaDownload /> Excel</button><button onClick={() => { setShowCoach(true); setCoachInput('Review my budgets and tell me which categories need attention and why.') }} className="px-4 py-3 rounded-xl border border-violet-300 text-violet-600 font-bold">Ask Sam</button></div>
 </div>
 
               <div className={`mb-5 rounded-2xl border p-4 ${isDark ? 'bg-slate-900/60 border-slate-700' : 'bg-teal-50 border-teal-100'}`}>
@@ -3601,6 +3592,8 @@ ${spendingDNA
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => setShowAssetModal(true)} className="px-4 py-3 rounded-xl bg-teal-500 text-white font-bold flex items-center gap-2"><FaPlus /> Asset</button>
                   <button onClick={() => setShowLiabilityModal(true)} className="px-4 py-3 rounded-xl bg-orange-500 text-white font-bold flex items-center gap-2"><FaPlus /> Liability</button>
+                  <button onClick={downloadAssetsExcel} className="px-4 py-3 rounded-xl border font-bold"><FaDownload /> Assets Excel</button>
+                  <button onClick={downloadLiabilitiesExcel} className="px-4 py-3 rounded-xl border font-bold"><FaDownload /> Liabilities Excel</button>
                   <button onClick={() => setShowImportModal(true)} className="px-4 py-3 rounded-xl bg-violet-500 text-white font-bold flex items-center gap-2"><FaUpload /> Excel</button>
                 </div>
               </div>
@@ -3644,7 +3637,7 @@ ${spendingDNA
                   <h2 className="text-2xl font-bold">Credit Health</h2>
                   <p className={`${muted}`}>Track your reported bureau score and a separate FinWise planning indicator.</p>
                 </div>
-                <button onClick={() => setShowCreditModal(true)} className="px-4 py-3 rounded-xl bg-blue-500 text-white font-bold flex items-center gap-2"><FaPlus /> Add Credit Report</button>
+                <div className="flex flex-wrap gap-2"><button onClick={() => setShowCreditModal(true)} className="px-4 py-3 rounded-xl bg-blue-500 text-white font-bold flex items-center gap-2"><FaPlus /> Add Credit Report</button><button onClick={downloadCreditExcel} className="px-4 py-3 rounded-xl border font-bold"><FaDownload /> Excel</button></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className={`${card} rounded-2xl border p-5`}><p className={`${muted}`}>Reported CIBIL Score</p><p className="text-4xl font-black mt-2">{latestCredit?.cibil_score ?? '—'}</p><p className={`${muted} text-xs mt-1`}>Official bureau score entered from your report</p></div>
