@@ -2036,7 +2036,7 @@ ${spendingDNA
     }> = []
 
     budgetRows
-      .filter((budget) => budget.limit > 0 && budget.percentage >= 80)
+      .filter((budget) => budget.limit > 0 && budget.percentage > 75)
       .forEach((budget) => {
         const id = `budget-${budget.id || budget.category}-${selectedMonth}`
         items.push({
