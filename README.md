@@ -392,4 +392,4 @@ Questions? Check the DEPLOYMENT_GUIDE.md or open an issue on GitHub.
 
 
 ### Professional dashboard analytics
-Integer-rounded reporting currency, financial-year trends, cash-flow waterfall, Sam voice navigation, multilingual/foreign-currency transaction capture, professional goal/budget/credit analytics, and separate Excel exports.
+Integer-rounded reporting currency, financial-year trends, cash-flow waterfall, Sam voice navigation, foreign-currency transaction capture, professional goal/budget/credit analytics, exhaustive profile fields, and separate Excel exports.
