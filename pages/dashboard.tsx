@@ -3320,9 +3320,9 @@ ${spendingDNA
                       >
                         <div
                           className={`h-3 rounded-full ${
-                            budget.percentage >= 90
+                            budget.percentage > 75
                               ? 'bg-red-500'
-                              : budget.percentage >= 70
+                              : budget.percentage >= 50
                               ? 'bg-amber-500'
                               : 'bg-teal-500'
                           }`}
@@ -3333,6 +3333,25 @@ ${spendingDNA
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {unbudgetedTransactions.length > 0 && (
+                <div className="mt-6 rounded-2xl border-2 border-red-500 bg-red-50 dark:bg-red-950/30 p-5 animate-pulse">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">💀</div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-black text-red-600">Unbudgeted transactions warning</h3>
+                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">These expense transactions have no matching active budget for {monthLabel(selectedMonth)}.</p>
+                      <div className="mt-3 space-y-2">
+                        {unbudgetedTransactions.map((tx) => (
+                          <div key={tx.id} className="flex items-center justify-between gap-3 rounded-xl border border-red-300 bg-white/80 dark:bg-red-950/40 px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0"><span className="text-red-600">✖</span><span className="font-semibold truncate">{tx.description || tx.category}</span><span className="text-xs text-red-500">{tx.category}</span></div>
+                            <span className="font-black text-red-600 shrink-0">{money(toBaseAmount(Number(tx.amount || 0), tx.currency || baseCurrency))}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </section>
