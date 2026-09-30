@@ -235,6 +235,8 @@ export default function Dashboard() {
   const [editingLiabilityId, setEditingLiabilityId] = useState<string | null>(null)
   const [editingCreditId, setEditingCreditId] = useState<string | null>(null)
   const [importMessage, setImportMessage] = useState('')
+  const [creditImportLoading, setCreditImportLoading] = useState(false)
+  const [creditImportMessage, setCreditImportMessage] = useState('')
   const [goalPlanLoading, setGoalPlanLoading] = useState(false)
   const [goalPlanMessage, setGoalPlanMessage] = useState('')
 
@@ -1485,6 +1487,23 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
         else imported++
       }
 
+      const budgetRowsToImport = rows('Budgets')
+      for (const row of budgetRowsToImport) {
+        const category = String(row.category || '').trim()
+        const limitAmount = Number(row.limit_amount)
+        if (!category || !Number.isFinite(limitAmount) || limitAmount < 0) continue
+        const result = await addBudget({user_id:user.id,category,limit_amount:limitAmount,month:String(row.month || new Date().toISOString().slice(0,7) + '-01').slice(0,10),spent_amount:0,is_active:row.is_active === '' ? true : Boolean(row.is_active),currency:String(row.currency || baseCurrency).toUpperCase()})
+        if (result.error) errors.push('Budget: ' + result.error.message); else imported++
+      }
+
+      const goalRowsToImport = rows('Goals')
+      for (const row of goalRowsToImport) {
+        const name = String(row.name || row.title || '').trim()
+        const target = Number(row.target_amount)
+        if (!name || !Number.isFinite(target) || target <= 0) continue
+        const result = await addGoal({user_id:user.id,title:name,name,target_amount:target,current_amount:Number(row.current_amount || 0),target_date:row.target_date ? String(row.target_date).slice(0,10) : null,inflation_rate:Number(row.inflation_rate || 6),return_rate:Number(row.return_rate || 8),risk_profile:String(row.risk_profile || 'Balanced'),currency:String(row.currency || baseCurrency).toUpperCase()})
+        if (result.error) errors.push('Goal: ' + result.error.message); else imported++
+      }
       const creditRows = rows('Credit_Profile')
       for (const row of creditRows) {
         const cibil = row.cibil_score === '' ? null : Number(row.cibil_score)
@@ -1902,6 +1921,87 @@ Do not invent transactions or financial data.
   const downloadAssetsExcel = () => downloadWorkbook(assets.map((a:any)=>({Asset:a.name,Type:a.type,CurrentValue:whole(a.current_value),PurchaseValue:a.purchase_value == null ? '' : whole(a.purchase_value),AsOfDate:a.as_of_date || '',Currency:a.currency || baseCurrency,Notes:a.notes || ''})), 'Assets', 'finwise-assets.xlsx')
   const downloadLiabilitiesExcel = () => downloadWorkbook(liabilities.map((a:any)=>({Liability:a.name,Type:a.type,Outstanding:whole(a.outstanding_amount),Original: a.original_amount == null ? '' : whole(a.original_amount),InterestRate:a.interest_rate || '',MonthlyPayment:a.monthly_payment == null ? '' : whole(a.monthly_payment),CreditLimit:a.credit_limit == null ? '' : whole(a.credit_limit),AsOfDate:a.as_of_date || '',Currency:a.currency || baseCurrency,Notes:a.notes || ''})), 'Liabilities', 'finwise-liabilities.xlsx')
   const downloadCreditExcel = () => downloadWorkbook(creditProfiles.map((a:any)=>({ReportDate:a.report_date || '',CIBIL:a.cibil_score || '',OtherScore:a.other_score || '',OtherScoreName:a.other_score_name || '',LatePayments12m:a.late_payments_12m || 0,CreditLimit:a.total_credit_limit == null ? '' : whole(a.total_credit_limit),CreditUsed:a.total_credit_used == null ? '' : whole(a.total_credit_used),Currency:a.currency || baseCurrency,Notes:a.notes || ''})), 'Credit_Profile', 'finwise-credit-profile.xlsx')
+  const downloadImportTemplate = () => {
+    const workbook = XLSX.utils.book_new()
+    const sheets: Record<string, any[]> = {
+      Transactions: [{date:'YYYY-MM-DD',description:'Example transaction',amount:100,transaction_type:'expense',category:'Food',expense_type:'variable',currency:baseCurrency,foreign_amount:'',foreign_currency:'',exchange_rate:'',payment_method:'',notes:''}],
+      Budgets: [{category:'Food',month:'YYYY-MM-01',limit_amount:1000,currency:baseCurrency,is_active:true}],
+      Goals: [{name:'Emergency Fund',target_amount:10000,current_amount:1000,target_date:'YYYY-MM-DD',inflation_rate:6,return_rate:8,risk_profile:'Balanced',currency:baseCurrency}],
+      Assets: [{asset_name:'Savings Account',asset_type:'Savings / Cash',current_value:1000,purchase_value:'',as_of_date:'YYYY-MM-DD',currency:baseCurrency,notes:''}],
+      Liabilities: [{liability_name:'Home Loan',liability_type:'Home Loan',outstanding_amount:100000,original_amount:'',interest_rate:'',monthly_payment:'',credit_limit:'',as_of_date:'YYYY-MM-DD',currency:baseCurrency,notes:''}],
+      Credit_Profile: [{report_date:'YYYY-MM-DD',cibil_score:'',other_score_name:'',other_score:'',late_payments_12m:0,total_credit_limit:'',total_credit_used:'',currency:baseCurrency,notes:''}],
+    }
+    Object.entries(sheets).forEach(([name, rows]) => XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), name))
+    XLSX.writeFile(workbook, 'finwise-import-template.xlsx')
+  }
+
+  const downloadImportWorkbook = () => {
+    const workbook = XLSX.utils.book_new()
+    const addSheet = (name: string, rows: any[]) => XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows.length ? rows : [{}]), name)
+    addSheet('Transactions', transactions.map((tx:any)=>({date:tx.date || '',description:tx.description || '',amount:whole(tx.amount),transaction_type:tx.transaction_type || 'expense',category:tx.category || '',expense_type:tx.expense_type || '',currency:tx.currency || baseCurrency,foreign_amount:tx.foreign_amount ?? '',foreign_currency:tx.foreign_currency || '',exchange_rate:tx.exchange_rate ?? '',payment_method:tx.payment_method || '',notes:tx.notes || ''})))
+    addSheet('Budgets', budgets.map((b:any)=>({category:b.category || '',month:b.month || '',limit_amount:whole(b.limit_amount || b.limit || 0),currency:b.currency || baseCurrency,is_active:b.is_active !== false})))
+    addSheet('Goals', goals.map((g:any)=>({name:g.name || g.title || '',target_amount:whole(g.target_amount || 0),current_amount:whole(g.current_amount || 0),target_date:g.target_date || '',inflation_rate:g.inflation_rate ?? 6,return_rate:g.return_rate ?? 8,risk_profile:g.risk_profile || 'Balanced',currency:g.currency || baseCurrency})))
+    addSheet('Assets', assets.map((a:any)=>({asset_name:a.name || '',asset_type:a.type || '',current_value:whole(a.current_value || 0),purchase_value:a.purchase_value ?? '',as_of_date:a.as_of_date || '',currency:a.currency || baseCurrency,notes:a.notes || ''})))
+    addSheet('Liabilities', liabilities.map((a:any)=>({liability_name:a.name || '',liability_type:a.type || '',outstanding_amount:whole(a.outstanding_amount || 0),original_amount:a.original_amount ?? '',interest_rate:a.interest_rate ?? '',monthly_payment:a.monthly_payment ?? '',credit_limit:a.credit_limit ?? '',as_of_date:a.as_of_date || '',currency:a.currency || baseCurrency,notes:a.notes || ''})))
+    addSheet('Credit_Profile', creditProfiles.map((a:any)=>({report_date:a.report_date || '',cibil_score:a.cibil_score ?? '',other_score_name:a.other_score_name || '',other_score:a.other_score ?? '',late_payments_12m:a.late_payments_12m || 0,total_credit_limit:a.total_credit_limit ?? '',total_credit_used:a.total_credit_used ?? '',currency:a.currency || baseCurrency,notes:a.notes || ''})))
+    XLSX.writeFile(workbook, 'finwise-financial-data.xlsx')
+  }
+
+  const handleCreditReportExcel = async (file: File) => {
+    setCreditImportLoading(true)
+    setCreditImportMessage('Reading credit report Excel...')
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true })
+      const sheetName = workbook.SheetNames.includes('Credit_Profile') ? 'Credit_Profile' : workbook.SheetNames[0]
+      const rows = XLSX.utils.sheet_to_json<any>(workbook.Sheets[sheetName] || {}, { defval: '' })
+      const row = rows[0]
+      if (!row) throw new Error('No credit-report row was found in the workbook.')
+      const pick = (...keys: string[]) => {
+        const key = Object.keys(row).find((candidate) => keys.some((wanted) => candidate.toLowerCase().replace(/[^a-z0-9]/g, '') === wanted.toLowerCase().replace(/[^a-z0-9]/g, '')))
+        return key ? row[key] : ''
+      }
+      const asDate = (value: any) => value instanceof Date ? value.toISOString().slice(0,10) : String(value || new Date().toISOString().slice(0,10)).slice(0,10)
+      const cibil = pick('cibil_score','CIBIL','cibil')
+      const otherScore = pick('other_score','OtherScore')
+      const limit = pick('total_credit_limit','CreditLimit')
+      const used = pick('total_credit_used','CreditUsed')
+      setCreditForm((current) => ({...current,report_date:asDate(pick('report_date','ReportDate')),cibil_score:cibil === '' ? '' : String(cibil),other_score_name:String(pick('other_score_name','OtherScoreName') || ''),other_score:otherScore === '' ? '' : String(otherScore),late_payments_12m:String(pick('late_payments_12m','LatePayments12m') || 0),total_credit_limit:limit === '' ? '' : String(limit),total_credit_used:used === '' ? '' : String(used),notes:String(pick('notes','Notes') || ''),currency:String(pick('currency','Currency') || baseCurrency).toUpperCase()}))
+      setEditingCreditId(null)
+      setShowCreditModal(true)
+      setCreditImportMessage('Credit report details captured from Excel. Review the fields and save the report.')
+    } catch (error: any) {
+      setCreditImportMessage(error?.message || 'Could not read the credit report Excel file.')
+    } finally { setCreditImportLoading(false) }
+  }
+
+  const handleCreditReportPdfOrImage = async (file: File) => {
+    setCreditImportLoading(true)
+    setCreditImportMessage('Reading credit report...')
+    try {
+      const reader = new FileReader()
+      const dataUrl = await new Promise<string>((resolve, reject) => { reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(file) })
+      const response = await fetch('/api/credit-report-extract', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fileName:file.name,mimeType:file.type,dataUrl,today:new Intl.DateTimeFormat('en-CA',{timeZone:userTimezone}).format(new Date())})})
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not read the credit report.')
+      const report = data.creditReport
+      if (!report) throw new Error('No reliable credit-report details were found.')
+      setCreditForm((current) => ({...current,report_date:report.report_date || current.report_date,cibil_score:report.cibil_score == null ? '' : String(report.cibil_score),other_score_name:report.other_score_name || '',other_score:report.other_score == null ? '' : String(report.other_score),late_payments_12m:String(report.late_payments_12m ?? 0),total_credit_limit:report.total_credit_limit == null ? '' : String(report.total_credit_limit),total_credit_used:report.total_credit_used == null ? '' : String(report.total_credit_used),notes:report.notes || ''}))
+      setEditingCreditId(null)
+      setShowCreditModal(true)
+      setCreditImportMessage('Credit report details captured. Review the extracted fields and save the report.')
+    } catch (error: any) {
+      setCreditImportMessage(error?.message || 'Could not read the credit report.')
+    } finally { setCreditImportLoading(false) }
+  }
+
+  const handleCreditReportUpload = async (file?: File) => {
+    if (!file) return
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name) || /excel|spreadsheet/.test(file.type)
+    if (file.size > 10 * 1024 * 1024) { setCreditImportMessage('Please keep the credit report under 10 MB.'); return }
+    if (isExcel) return handleCreditReportExcel(file)
+    if (file.type === 'application/pdf' || file.type.startsWith('image/')) return handleCreditReportPdfOrImage(file)
+    setCreditImportMessage('Please upload a PDF, JPG, PNG, WEBP, HEIC/HEIF image, XLSX or XLS file.')
+  }
 
   const printTransactions = () => {
     const previousTitle = document.title
@@ -3736,7 +3836,12 @@ ${spendingDNA
                   <h2 className="text-2xl font-bold">Credit Health</h2>
                   <p className={`${muted}`}>Track your reported bureau score and a separate FinWise planning indicator.</p>
                 </div>
-                <div className="flex flex-wrap gap-2"><button onClick={() => setShowCreditModal(true)} className="px-4 py-3 rounded-xl bg-blue-500 text-white font-bold flex items-center gap-2"><FaPlus /> Add Credit Report</button><button onClick={downloadCreditExcel} className="px-4 py-3 rounded-xl border font-bold"><FaDownload /> Excel</button></div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setShowCreditModal(true)} className="px-4 py-3 rounded-xl bg-blue-500 text-white font-bold flex items-center gap-2"><FaPlus /> Add Credit Report</button>
+                  <label className="px-4 py-3 rounded-xl border font-bold cursor-pointer flex items-center gap-2"><FaUpload /> Import PDF/Image<input type="file" accept=".pdf,image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" disabled={creditImportLoading} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleCreditReportUpload(file); e.currentTarget.value = "" }} /></label>
+                  <label className="px-4 py-3 rounded-xl border font-bold cursor-pointer flex items-center gap-2"><FaUpload /> Import Excel<input type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" className="hidden" disabled={creditImportLoading} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleCreditReportUpload(file); e.currentTarget.value = "" }} /></label>
+                  <button onClick={downloadCreditExcel} className="px-4 py-3 rounded-xl border font-bold flex items-center gap-2"><FaDownload /> Excel</button>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className={`${card} rounded-2xl border p-5`}><p className={`${muted}`}>Reported CIBIL Score</p><p className="text-4xl font-black mt-2">{latestCredit?.cibil_score ?? '—'}</p><p className={`${muted} text-xs mt-1`}>Official bureau score entered from your report</p></div>
@@ -3770,7 +3875,11 @@ ${spendingDNA
                   <button onClick={() => setShowImportModal(true)} className="px-4 py-3 rounded-xl bg-violet-500 text-white font-bold flex items-center gap-2"><FaUpload /> Upload Excel</button>
                 </div>
                 <div className={`${muted} text-sm mt-5`}>
-                  Sheets: <strong>Transactions</strong>, <strong>Assets</strong>, <strong>Liabilities</strong>, <strong>Credit_Profile</strong>.
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <button onClick={downloadImportTemplate} className="px-4 py-3 rounded-xl border font-bold flex items-center gap-2"><FaDownload /> Download Excel Template</button>
+                    <button onClick={downloadImportWorkbook} className="px-4 py-3 rounded-xl border font-bold flex items-center gap-2"><FaDownload /> Download Current Data</button>
+                  </div>
+                  Sheets: <strong>Transactions</strong>, <strong>Budgets</strong>, <strong>Goals</strong>, <strong>Assets</strong>, <strong>Liabilities</strong>, <strong>Credit_Profile</strong>. The template shows the exact fields accepted by FinWise import.
                 </div>
               </div>
             </section>
@@ -4299,6 +4408,7 @@ ${spendingDNA
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl p-6">
             <div className="flex items-center justify-between mb-5"><div><h2 className="text-xl font-bold">{editingCreditId ? 'Edit Credit Report' : 'Add Credit Report'}</h2><p className="text-sm text-slate-400">Enter figures from your official bureau report. FinWise does not calculate a CIBIL score.</p></div><button onClick={() => setShowCreditModal(false)} className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center"><FaTimes /></button></div>
+            {creditImportMessage && <div className="mb-4 rounded-xl bg-cyan-500/10 border border-cyan-400/30 p-3 text-sm text-cyan-200">{creditImportMessage}</div>}
             <div className="space-y-4">
               <input type="date" value={creditForm.report_date} onChange={(e) => setCreditForm({...creditForm,report_date:e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" />
               <div className="grid grid-cols-2 gap-3"><input type="number" min="300" max="900" value={creditForm.cibil_score} onChange={(e) => setCreditForm({...creditForm,cibil_score:e.target.value})} placeholder="CIBIL score (300–900)" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /><input type="number" min="0" value={creditForm.late_payments_12m} onChange={(e) => setCreditForm({...creditForm,late_payments_12m:e.target.value})} placeholder="Late payments, 12m" className="px-4 py-3 rounded-xl border border-slate-700 bg-slate-800" /></div>
@@ -4518,7 +4628,7 @@ function MetricCard({
           positive ? 'text-emerald-500' : 'text-red-500'
         }`}
       >
-        {change >= 0 ? '↑' : '↓'} {percent(Math.abs(change))}% vs
+        {change >= 0 ? '↑' : '↓'} {Math.round((Number.isFinite(change) ? Math.abs(change) : 0) * 100) / 100}% vs
         previous month
       </div>
     </motion.div>
