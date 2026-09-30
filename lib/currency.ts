@@ -32,6 +32,8 @@ export const formatMoney = (value: number, currency: string = 'INR') => {
   return new Intl.NumberFormat('en', {
     style: 'currency',
     currency: code,
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
   }).format(Number.isFinite(value) ? value : 0)
 }
 
