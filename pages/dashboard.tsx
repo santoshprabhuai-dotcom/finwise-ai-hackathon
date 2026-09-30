@@ -304,6 +304,10 @@ const [budgetForm, setBudgetForm] = useState({
   const [coachMessages, setCoachMessages] = useState<any[]>([])
   const [coachInput, setCoachInput] = useState('')
   const [coachLoading, setCoachLoading] = useState(false)
+  const [pendingTransaction, setPendingTransaction] = useState<any>(null)
+  const [pendingTransactionBudget, setPendingTransactionBudget] = useState<any>(null)
+  const [receiptLoading, setReceiptLoading] = useState(false)
+  const [isTouring, setIsTouring] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -329,7 +333,7 @@ const [budgetForm, setBudgetForm] = useState({
     ? 'bg-slate-950 border-slate-800'
     : 'bg-slate-950'
 
-  const money = (value: number, currency: string = baseCurrency) => formatMoney(value, currency)
+  const money = (value: number, currency: string = baseCurrency) => formatMoney(Number.isFinite(value) ? Math.round(value * 10) / 10 : 0, currency)
   const toBaseAmount = (value: number, currency: string = baseCurrency) => convertCurrency(Number(value || 0), currency, baseCurrency, fxRates)
 
   useEffect(() => {
@@ -424,7 +428,8 @@ const [budgetForm, setBudgetForm] = useState({
 
   useEffect(() => {
     if (showCoach && coachMessages.length === 0) {
-      speakText('I am FinWise AI Coach, your personal financial planning assistant. I can help with budgets, savings, goals, cash flow and spending. What financial goal would you like to work on today?')
+      const name = profileName || 'there'
+      speakText(`${greeting}, ${name}. I’m Sam, your AI Coach. How can I help you today?`)
     }
   }, [showCoach])
 
@@ -1392,11 +1397,13 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
     const payload = {
       user_id: user.id,
       description,
-      amount,
+      amount: Math.round(amount * 10) / 10,
       transaction_type: transactionForm.transaction_type,
       category,
+      expense_type: transactionForm.transaction_type === 'expense' ? 'variable' : 'other',
       date: transactionForm.date,
       currency: transactionForm.currency || baseCurrency,
+      is_ai_categorized: category !== transactionForm.category,
     }
 
     const result = editingTransactionId
@@ -1445,10 +1452,49 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
     await loadDashboardData(user.id)
   }
 
+  const confirmCoachTransaction = async () => {
+    if (!user || !pendingTransaction) return
+    const tx = pendingTransaction
+    const result = await addTransaction({
+      user_id: user.id,
+      description: tx.description,
+      amount: Math.round(Number(tx.amount) * 10) / 10,
+      transaction_type: tx.transaction_type,
+      category: tx.category,
+      expense_type: tx.expense_type || (tx.transaction_type === 'expense' ? 'variable' : 'other'),
+      date: tx.date,
+      currency: tx.currency || baseCurrency,
+      payment_method: tx.payment_method || null,
+      notes: tx.notes || 'Recorded by Sam, AI Coach',
+      is_ai_categorized: true,
+    })
+    if (result.error) {
+      setCoachMessages((current) => [...current, { role: 'assistant', content: `I could not save that transaction: ${result.error.message || 'database error'}` }])
+      return
+    }
+    setCoachMessages((current) => [...current, { role: 'assistant', content: `Done. I recorded ${money(Number(tx.amount), tx.currency || baseCurrency)} for ${tx.description} under ${tx.category}. ${pendingTransactionBudget?.budgeted ? 'This was budgeted.' : 'No matching budget was found for this category and month.'}` }])
+    setPendingTransaction(null)
+    setPendingTransactionBudget(null)
+    await loadDashboardData(user.id)
+  }
+
+  const cancelCoachTransaction = () => {
+    setPendingTransaction(null)
+    setPendingTransactionBudget(null)
+    setCoachMessages((current) => [...current, { role: 'assistant', content: 'No transaction was recorded.' }])
+  }
+
   const askCoach = async (inputOverride?: string) => {
     const userMessage = (inputOverride ?? coachInput).trim()
 
     if (!userMessage || coachLoading) return
+
+    if (/^(stop|stop reading|stop speaking|be quiet|quiet)$/i.test(userMessage)) {
+      stopSpeaking()
+      setCoachMessages((current) => [...current, { role: 'user', content: userMessage }, { role: 'assistant', content: 'Stopped. I’ll stay quiet until you ask me to speak again.' }])
+      setCoachInput('')
+      return
+    }
 
     setCoachMessages((current) => [
       ...current,
@@ -1462,6 +1508,49 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
     setCoachLoading(true)
 
     try {
+      const looksLikeTransaction = /\\b(record|add|register|log|save|paid|spent|bought|purchase|received|earned|salary|income|expense|transaction|bill|invoice)\\b/i.test(userMessage) || /(?:₹|rs\\.?|inr|usd|\\$|eur|gbp|bhd|dinar)\\s*\\d|\\d+(?:\\.\\d+)?\\s*(?:rupees?|dollars?|dinars?)/i.test(userMessage)
+
+      if (looksLikeTransaction) {
+        const actionResponse = await fetch('/api/coach-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: userMessage,
+            baseCurrency,
+            timezone: userTimezone,
+            today: new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(new Date()),
+          }),
+        })
+        const actionData = await actionResponse.json()
+        if (actionResponse.ok && actionData.transaction) {
+          const tx = actionData.transaction
+          const matchingBudget = budgets.find((budget) =>
+            String(budget.category || '').toLowerCase() === String(tx.category || '').toLowerCase() &&
+            String(budget.month || '').slice(0, 7) === String(tx.date || '').slice(0, 7) &&
+            budget.is_active !== false
+          )
+          const budgetedAmount = matchingBudget ? toBaseAmount(Number(matchingBudget.limit_amount || 0), matchingBudget.currency || baseCurrency) : 0
+          const alreadySpent = matchingBudget ? monthTransactions
+            .filter((item) => item.transaction_type === 'expense' && String(item.category || '').toLowerCase() === String(tx.category || '').toLowerCase())
+            .reduce((sum, item) => sum + toBaseAmount(Number(item.amount || 0), item.currency || baseCurrency), 0) : 0
+          const projected = alreadySpent + toBaseAmount(Number(tx.amount || 0), tx.currency || baseCurrency)
+          setPendingTransaction(tx)
+          setPendingTransactionBudget({ budgeted: Boolean(matchingBudget), limit: budgetedAmount, spent: alreadySpent, projected, remaining: Math.max(0, budgetedAmount - projected) })
+          setCoachMessages((current) => [...current, {
+            role: 'assistant',
+            content: `I understood this as a transaction. Please confirm before I save it.\\n\\n${tx.transaction_type === 'income' ? 'Income' : 'Expense'}: ${money(Number(tx.amount), tx.currency || baseCurrency)}\\nDescription: ${tx.description}\\nCategory: ${tx.category}\\nType: ${tx.expense_type || 'other'}\\nDate: ${tx.date}\\nBudget: ${matchingBudget ? `Budgeted — ${money(budgetedAmount)} limit; projected spend ${money(projected)}.` : 'Not budgeted — no matching budget was found.'}`,
+          }])
+          speakText(`I found a transaction for ${money(Number(tx.amount), tx.currency || baseCurrency)} under ${tx.category}. Please confirm if you want me to save it.`)
+          setCoachLoading(false)
+          return
+        }
+        if (actionResponse.ok && actionData.missing?.length) {
+          setCoachMessages((current) => [...current, { role: 'assistant', content: `I can record that for you. I just need: ${actionData.missing.join(', ')}.` }])
+          setCoachLoading(false)
+          return
+        }
+      }
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -1469,7 +1558,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
         },
         body: JSON.stringify({
           system: `
-You are FinWise AI, the user’s personal financial planning coach. Your name is FinWise AI Coach. Start the first assistant response naturally with “I’m FinWise AI Coach, your personal financial planning assistant.” Ask useful follow-up questions when financial details are missing. Give concise, actionable answers.
+You are Sam, the user’s personal AI Coach for FinWise. Introduce yourself as “Sam, your AI Coach.” Be clear, practical and friendly. You can explain the dashboard, budgets, goals, cash flow, net worth, credit, transactions and reports. When the user asks to record a transaction, do not claim it was saved unless the app has explicitly confirmed it. Ask for missing details. When a transaction is proposed by the app, the user must confirm before it is saved.
 
 User timezone: ${userTimezone}
 Base currency: ${baseCurrency}
@@ -1530,6 +1619,98 @@ Do not invent transactions or financial data.
       ])
     } finally {
       setCoachLoading(false)
+    }
+  }
+
+  const readCurrentPage = () => {
+    stopSpeaking()
+    setIsTouring(true)
+    const name = profileName || 'there'
+    let summary = ''
+    if (activeTab === 'Overview') summary = `${greeting}, ${name}. This is your financial overview. Your income is ${money(stats.totalIncome)}, expenses are ${money(stats.totalExpenses)}, net savings are ${money(stats.netSavings)}, and your savings rate is ${stats.savingsRate.toFixed(1)} percent. Your largest spending category is ${spendingDNA[0]?.name || 'not available yet'}. I can explain any section if you ask.`
+    else if (activeTab === 'Transactions') summary = `This is Transactions. You have ${monthTransactions.length} transactions for ${monthLabel(selectedMonth)}. I can add, edit, categorize, import, export or explain them. You can also upload a bill or invoice and I can prepare a transaction for your confirmation.`
+    else if (activeTab === 'Budgets') summary = `This is Budgets. You have ${budgetRows.length} budgets. I compare actual spending with each category limit and can tell you which budgets are approaching their limits.`
+    else if (activeTab === 'Goals') summary = `This is Goals. You have ${goals.length} goals. I can explain progress, remaining amounts and monthly funding targets.`
+    else if (activeTab === 'Financial Position' || activeTab === 'Net Worth') summary = `This is your financial position. Total assets are ${money(totalAssets)}, liabilities are ${money(totalLiabilities)}, and net worth is ${money(netWorth)}.`
+    else if (activeTab === 'Credit Health') summary = `This is Credit Health. Your latest reported CIBIL score is ${latestCredit?.cibil_score ?? 'not entered'}, and credit utilization is ${latestCredit?.total_credit_limit ? Math.round(creditUtilization) + ' percent' : 'not available'}.`
+    else if (activeTab === 'AI Insights') summary = `This is AI Insights. I can analyze your income, expenses, savings and spending categories and turn them into practical next steps.`
+    else if (activeTab === 'Import') summary = `This is Import. You can bring transaction and financial-position data in through the supported Excel workbook format.`
+    else summary = `This is ${activeTab}. Ask me what you want to understand and I’ll walk you through it.`
+    speakText(summary)
+    window.setTimeout(() => setIsTouring(false), Math.max(5000, summary.length * 35))
+  }
+
+  const downloadTransactionsExcel = () => {
+    const rows = monthTransactions.map((tx) => ({
+      Date: tx.date,
+      Description: tx.description,
+      Category: tx.category,
+      Type: tx.transaction_type,
+      ExpenseType: tx.expense_type || '',
+      Amount: Math.round(Number(tx.amount || 0) * 10) / 10,
+      Currency: tx.currency || baseCurrency,
+      PaymentMethod: tx.payment_method || '',
+      Notes: tx.notes || '',
+    }))
+    const worksheet = XLSX.utils.json_to_sheet(rows)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions')
+    XLSX.writeFile(workbook, `finwise-transactions-${selectedMonth}.xlsx`)
+  }
+
+  const printTransactions = () => {
+    const previousTitle = document.title
+    document.title = `FinWise Transactions ${selectedMonth}`
+    window.print()
+    window.setTimeout(() => { document.title = previousTitle }, 1000)
+  }
+
+  const handleReceiptUpload = async (file?: File) => {
+    if (!file || !user) return
+    if (!/^image\\/(jpeg|png|webp|heic|heif)$/.test(file.type) && file.type !== 'application/pdf') {
+      alert('Please upload a JPG, PNG, WEBP, HEIC/HEIF image or PDF.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Please keep the bill or invoice under 10 MB.')
+      return
+    }
+    setReceiptLoading(true)
+    try {
+      const reader = new FileReader()
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const response = await fetch('/api/receipt-extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          mimeType: file.type,
+          dataUrl,
+          baseCurrency,
+          timezone: userTimezone,
+          today: new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(new Date()),
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not read the bill.')
+      if (!data.transaction) throw new Error(`I could not reliably read the transaction amount from this document. ${(data.missing || []).join(', ')}`)
+      const tx = data.transaction
+      const matchingBudget = budgets.find((budget) => String(budget.category || '').toLowerCase() === String(tx.category || '').toLowerCase() && String(budget.month || '').slice(0, 7) === String(tx.date || '').slice(0, 7) && budget.is_active !== false)
+      const limit = matchingBudget ? toBaseAmount(Number(matchingBudget.limit_amount || 0), matchingBudget.currency || baseCurrency) : 0
+      const spent = matchingBudget ? monthTransactions.filter((item) => item.transaction_type === 'expense' && String(item.category || '').toLowerCase() === String(tx.category || '').toLowerCase()).reduce((sum, item) => sum + toBaseAmount(Number(item.amount || 0), item.currency || baseCurrency), 0) : 0
+      setPendingTransaction(tx)
+      setPendingTransactionBudget({ budgeted: Boolean(matchingBudget), limit, spent, projected: spent + toBaseAmount(Number(tx.amount || 0), tx.currency || baseCurrency), remaining: Math.max(0, limit - spent - toBaseAmount(Number(tx.amount || 0), tx.currency || baseCurrency)) })
+      setShowCoach(true)
+      setCoachMessages((current) => [...current, { role: 'assistant', content: `I read ${file.name}. Please review and confirm before I save it.\\n\\n${tx.description} — ${money(Number(tx.amount), tx.currency || baseCurrency)}\\nCategory: ${tx.category}\\nDate: ${tx.date}\\nBudget: ${matchingBudget ? 'Budgeted' : 'Not budgeted'}` }])
+      speakText('I read the bill and prepared a transaction. Please review and confirm it before I save it.')
+    } catch (error: any) {
+      alert(error?.message || 'Could not read this bill or invoice.')
+    } finally {
+      setReceiptLoading(false)
     }
   }
 
@@ -1881,7 +2062,7 @@ ${spendingDNA
       </aside>
 
       {/* FinWise AI Robot Guide */}
-      <div className="fixed left-0 bottom-24 z-50 hidden lg:block w-60 h-56 pointer-events-none">
+      <div data-finwise-robot className="fixed left-[270px] bottom-24 z-20 hidden lg:block w-60 h-56 pointer-events-none">
         <motion.div
           animate={{ x: [0, 4, 0, -4, 0], y: [0, -2, 0, -2, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
@@ -1891,23 +2072,23 @@ ${spendingDNA
             <div className="flex items-start gap-2">
               <div className="flex-1 text-xs font-extrabold leading-tight">
                 Plan with AI.<br />
-                <span className="text-blue-600">Direct your future.</span>
+                <span className="text-blue-600">Sam • AI Coach</span>
               </div>
               <button
                 type="button"
-                onClick={toggleGuideSpeech}
+                onClick={isSpeaking ? stopSpeaking : readCurrentPage}
                 className="pointer-events-auto shrink-0 w-9 h-9 rounded-full bg-slate-900 text-cyan-300 flex items-center justify-center hover:scale-105 transition"
-                title={isSpeaking ? 'Stop FinWise AI speech' : 'Speak with FinWise AI'}
-                aria-label={isSpeaking ? 'Stop FinWise AI speech' : 'Speak with FinWise AI'}
+                title={isSpeaking ? 'Stop Sam' : 'Ask Sam to explain this page'}
+                aria-label={isSpeaking ? 'Stop Sam' : 'Ask Sam to explain this page'}
                 aria-pressed={isSpeaking}
               >
                 {isSpeaking ? <FaStop className="text-xs" /> : <FaVolumeUp className="text-xs" />}
               </button>
             </div>
             <div className="mt-2 text-[10px] font-semibold text-slate-500">
-              {isSpeaking ? 'Speaking • tap to stop' : 'Voice guide'}
+              {isSpeaking ? 'Speaking • tap to stop' : 'Sam • Read this page'}
             </div>
-            <div className="absolute right-12 -bottom-2 w-4 h-4 bg-white border-r border-b border-cyan-300 rotate-45" />
+            <div className="mt-2 flex gap-2 pointer-events-auto">\n              <button type="button" onClick={readCurrentPage} className="px-2.5 py-1.5 rounded-lg bg-cyan-500 text-white text-[10px] font-bold">Read page</button>\n              {isSpeaking && <button type="button" onClick={stopSpeaking} className="px-2.5 py-1.5 rounded-lg bg-red-500 text-white text-[10px] font-bold">Stop</button>}\n            </div>\n            <div className="absolute right-12 -bottom-2 w-4 h-4 bg-white border-r border-b border-cyan-300 rotate-45" />
           </div>
 
           <motion.img
@@ -1989,8 +2170,8 @@ ${spendingDNA
               <button
                 onClick={() => setShowCoach(true)}
                 className="w-10 h-10 rounded-xl flex items-center justify-center bg-violet-500 text-white hover:bg-violet-600"
-                title="AI Money Coach"
-                aria-label="Open AI Money Coach"
+                title="Sam — AI Coach"
+                aria-label="Open Sam, AI Coach"
               >
                 <FaRobot />
               </button>
@@ -2513,7 +2694,7 @@ ${spendingDNA
                     </div>
 
                     <div>
-                      <h3 className="font-bold">AI Money Coach</h3>
+                      <h3 className="font-bold">Sam — AI Coach</h3>
                       <p className={`text-xs ${muted}`}>
                         Your personal financial assistant
                       </p>
@@ -2532,7 +2713,7 @@ ${spendingDNA
                     onClick={() => setShowCoach(true)}
                     className="mt-5 w-full py-3 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-semibold"
                   >
-                    Ask AI Money Coach
+                    Ask Sam
                   </button>
                 </div>
 
@@ -2639,7 +2820,13 @@ ${spendingDNA
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <button
+                  <button type="button" onClick={downloadTransactionsExcel} className="px-4 py-3 rounded-xl border border-emerald-400/40 text-emerald-600 font-semibold flex items-center gap-2 hover:bg-emerald-500/10"><FaDownload /> Excel</button>
+                  <button type="button" onClick={printTransactions} className="px-4 py-3 rounded-xl border border-slate-400/40 font-semibold flex items-center gap-2 hover:bg-slate-500/10"><FaDownload /> Print / PDF</button>
+                  <label className="px-4 py-3 rounded-xl border border-cyan-400/40 text-cyan-600 font-semibold flex items-center gap-2 hover:bg-cyan-500/10 cursor-pointer">
+                    <FaUpload /> {receiptLoading ? 'Reading…' : 'Bill / Invoice'}
+                    <input type="file" className="hidden" accept="image/*,.pdf" disabled={receiptLoading} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleReceiptUpload(file); e.currentTarget.value = '' }} />
+                  </label>
+                                    <button
                     type="button"
                     onClick={() => setShowImportModal(true)}
                     className="px-4 py-3 rounded-xl border border-violet-400/40 text-violet-600 dark:text-violet-300 font-semibold flex items-center gap-2 hover:bg-violet-500/10"
@@ -3800,7 +3987,7 @@ ${spendingDNA
                 </div>
 
                 <div>
-                  <h2 className="font-bold">AI Money Coach</h2>
+                  <h2 className="font-bold">Sam — AI Coach</h2>
                   <p className={`text-xs ${muted}`}>
                     Ask anything about your finances
                   </p>
@@ -3823,11 +4010,11 @@ ${spendingDNA
                   <FaRobot className="mx-auto text-4xl text-violet-500 mb-4" />
 
                   <p className="font-semibold">
-                    Hi! I&apos;m FinWise AI Coach — your personal financial planning assistant.
+                    Hi! I&apos;m Sam, your AI Coach.
                   </p>
 
                   <p className="text-sm mt-2">
-                    Ask me about budgeting, saving, goals, cash flow, debt or spending. I&apos;ll ask questions when I need more context and give you a clear next step.
+                    Good day! How can I help you today? Ask me anything, including recording a transaction, checking a budget, reading this dashboard, or explaining your finances.
                   </p>
                 </div>
               )}
@@ -3877,6 +4064,23 @@ ${spendingDNA
                 </div>
               )}
             </div>
+
+            {pendingTransaction && (
+              <div className="mx-4 mb-3 rounded-2xl border border-violet-300 bg-violet-50 dark:bg-violet-950/40 p-4 text-sm">
+                <div className="font-bold text-violet-700 dark:text-violet-300">Transaction ready for confirmation</div>
+                <div className="mt-2 space-y-1">
+                  <div><strong>Amount:</strong> {money(Number(pendingTransaction.amount), pendingTransaction.currency || baseCurrency)}</div>
+                  <div><strong>Description:</strong> {pendingTransaction.description}</div>
+                  <div><strong>Category:</strong> {pendingTransaction.category}</div>
+                  <div><strong>Date:</strong> {pendingTransaction.date}</div>
+                  <div><strong>Budget:</strong> {pendingTransactionBudget?.budgeted ? `Budgeted • ${money(pendingTransactionBudget.limit)} limit • ${money(pendingTransactionBudget.projected)} projected` : 'Not budgeted'}</div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button type="button" onClick={confirmCoachTransaction} className="flex-1 py-2 rounded-xl bg-emerald-500 text-white font-bold">Confirm &amp; Save</button>
+                  <button type="button" onClick={cancelCoachTransaction} className="px-4 py-2 rounded-xl border font-semibold">Cancel</button>
+                </div>
+              </div>
+            )}
 
             <div className="p-4 border-t">
               <div className="flex gap-2">
