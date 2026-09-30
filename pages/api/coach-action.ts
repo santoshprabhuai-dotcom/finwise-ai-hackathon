@@ -65,7 +65,7 @@ Allowed currencies: ${currencies.join(', ')}`
         'X-Title': 'FinWise AI',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'openai/gpt-4o-mini',
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: String(message) },
