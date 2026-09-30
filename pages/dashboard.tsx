@@ -431,7 +431,7 @@ const [budgetForm, setBudgetForm] = useState({
       const name = profileName || 'there'
       speakText(`${greeting}, ${name}. I’m Sam, your AI Coach. How can I help you today?`)
     }
-  }, [showCoach, greeting, profileName])
+  }, [showCoach, greeting])
 
   const stopSpeaking = () => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
