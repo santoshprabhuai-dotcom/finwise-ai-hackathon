@@ -3398,7 +3398,7 @@ ${spendingDNA
                               : 'bg-teal-500'
                           }`}
                           style={{
-                            width: `${budget.percentage}%`,
+                            width: `${Math.min(100, budget.percentage)}%`,
                           }}
                         />
                       </div>
