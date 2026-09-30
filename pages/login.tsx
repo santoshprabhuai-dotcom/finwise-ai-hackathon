@@ -59,8 +59,7 @@ export default function Login() {
             <img src={FINWISE_LOGO_DATA} alt="FinWise AI" className="w-full max-w-[300px] h-auto object-contain" />
           </div>
 
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">FinWise AI</h1>
+
           <p className="text-center text-gray-600 mb-8">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </p>
