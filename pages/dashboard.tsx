@@ -528,7 +528,7 @@ const [budgetForm, setBudgetForm] = useState({
     })
   }, [transactions, selectedMonth])
 
-  const stats = useMemo(() => {
+  // Keep derived dashboard metrics fully closed before the next declaration so CI/Vercel parses the TSX reliably.\n  const stats = useMemo(() => {
     const income = monthTransactions
       .filter((t) => t.transaction_type === 'income')
       .reduce((sum, t) => sum + toBaseAmount(Number(t.amount || 0), t.currency || 'INR'), 0)
