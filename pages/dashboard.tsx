@@ -2641,7 +2641,7 @@ ${spendingDNA
                       <p className={`text-sm ${muted}`}>
                         Your current savings rate is{' '}
                         <strong>
-                          {stats.savingsRate}%
+                          {percent(stats.savingsRate)}%
                         </strong>
                         .
                       </p>
