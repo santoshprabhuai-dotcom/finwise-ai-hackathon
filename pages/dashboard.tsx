@@ -708,7 +708,7 @@ const [budgetForm, setBudgetForm] = useState({
       .map((item: any) => ({
         ...item,
         month: new Date(
-          Number(item.key.slice(0, 4)),
+          Number(item.key.slice(0, 6)),
           Number(item.key.slice(5, 7)) - 1,
           1
         ).toLocaleDateString('en-IN', {
@@ -1890,10 +1890,9 @@ Do not invent transactions or financial data.
           system: `
 You are FinWise AI.
 
-Analyze the user's financial summary and return exactly 4 concise insights.
+Analyze the user's financial summary and return exactly 6 professional recommendations.
 
-Each insight must be one short sentence.
-Focus on spending, savings, income and one practical action.
+Each recommendation must be concise, evidence-based and action-oriented. Cover cash flow, spending, savings, budgets, goals and credit/risk where data exists. Include a measurable next step.
 
 Do not invent data.
           `,
@@ -1935,9 +1934,9 @@ ${spendingDNA
         ? parsed
         : [
             'Your financial summary is ready for review.',
-            'Review your largest spending category for possible savings.',
-            'Keep monitoring your savings rate each month.',
-            'Use the AI Money Coach for personalized questions.',
+            'Review your largest spending category and set a measurable reduction target.',
+            'Track the savings rate monthly and direct surplus toward the highest-priority goal.',
+            'Ask Sam for a month-by-month action plan based on your actual data.',
           ]
 
       setInsights(insightList)
