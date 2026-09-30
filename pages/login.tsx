@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FINWISE_LOGO_DATA } from '@/lib/finwise-logo'
 import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import { signUp, signIn } from '@/lib/supabase'
@@ -53,18 +54,9 @@ export default function Login() {
         className="w-full max-w-md"
       >
         <div className="bg-white rounded-2xl shadow-2xl p-8">
-          {/* FinWise AI brand */}
+          {/* FinWise AI logo */}
           <div className="flex justify-center mb-6">
-            <div className="w-full max-w-[300px] rounded-2xl border-2 border-cyan-400 bg-slate-950 p-3 shadow-xl">
-              <svg viewBox="0 0 360 100" className="w-full h-auto" role="img" aria-label="FinWise AI">
-                <rect x="2" y="2" width="356" height="96" rx="20" fill="#06152f" stroke="#14b8ff" strokeWidth="4"/>
-                <path d="M42 69 L74 46 L103 61 L145 27" fill="none" stroke="#f5b72f" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M142 28 L143 45 L160 39" fill="none" stroke="#f5b72f" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="34" y="58" width="12" height="18" rx="3" fill="#f5b72f"/><rect x="58" y="49" width="12" height="27" rx="3" fill="#f5b72f"/><rect x="82" y="55" width="12" height="21" rx="3" fill="#f5b72f"/>
-                <text x="174" y="63" fontSize="38" fontWeight="800" fill="white">FinWise</text>
-                <text x="309" y="63" fontSize="38" fontWeight="900" fill="#f5b72f">AI</text>
-              </svg>
-            </div>
+            <img src={FINWISE_LOGO_DATA} alt="FinWise AI" className="w-full max-w-[300px] h-auto object-contain" />
           </div>
 
           {/* Title */}
