@@ -299,6 +299,9 @@ const [budgetForm, setBudgetForm] = useState({
     category: 'Food',
     date: new Date().toISOString().split('T')[0],
     currency: 'INR',
+    foreign_amount: '',
+    foreign_currency: '',
+    exchange_rate: '',
   })
 
   const [smartCategoryLoading, setSmartCategoryLoading] = useState(false)
@@ -321,6 +324,8 @@ const [budgetForm, setBudgetForm] = useState({
 
   const [insights, setInsights] = useState<string[]>([])
   const [insightsLoading, setInsightsLoading] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileForm, setProfileForm] = useState({ full_name:'', phone:'', date_of_birth:'', country:'', address_line1:'', address_line2:'', city:'', state:'', postal_code:'', occupation:'', employer:'', annual_income:'', dependents:'0', financial_profile_notes:'' })
 
   const isDark = theme === 'dark'
 
@@ -336,7 +341,9 @@ const [budgetForm, setBudgetForm] = useState({
     ? 'bg-slate-950 border-slate-800'
     : 'bg-slate-950'
 
-  const money = (value: number, currency: string = baseCurrency) => formatMoney(Number.isFinite(value) ? Math.round(value * 10) / 10 : 0, currency)
+  const money = (value: number, currency: string = baseCurrency) => formatMoney(Number.isFinite(value) ? Math.round(value) : 0, currency)
+  const whole = (value: number) => Math.round(Number.isFinite(value) ? value : 0)
+  const percent = (value: number) => Math.round(Number.isFinite(value) ? value : 0)
   const toBaseAmount = (value: number, currency: string = baseCurrency) => convertCurrency(Number(value || 0), currency, baseCurrency, fxRates)
 
   useEffect(() => {
@@ -376,6 +383,7 @@ const [budgetForm, setBudgetForm] = useState({
         setUser(data.user)
         const { data: profile } = await supabase.from('users').select('*').eq('id', data.user.id).maybeSingle()
         if (profile?.base_currency) setBaseCurrency(profile.base_currency)
+        setProfileForm({ full_name: profile?.full_name || data.user.user_metadata?.full_name || data.user.user_metadata?.name || '', phone: profile?.phone || '', date_of_birth: profile?.date_of_birth || '', country: profile?.country || '', address_line1: profile?.address_line1 || '', address_line2: profile?.address_line2 || '', city: profile?.city || '', state: profile?.state || '', postal_code: profile?.postal_code || '', occupation: profile?.occupation || '', employer: profile?.employer || '', annual_income: profile?.annual_income != null ? String(profile.annual_income) : '', dependents: profile?.dependents != null ? String(profile.dependents) : '0', financial_profile_notes: profile?.financial_profile_notes || '' })
         await supabase.from('users').update({ timezone }).eq('id', data.user.id)
         setAlertEmailEnabled(profile?.alert_email_enabled !== false)
         setAlertWhatsappEnabled(profile?.alert_whatsapp_enabled === true)
@@ -564,6 +572,37 @@ const [budgetForm, setBudgetForm] = useState({
     }
   }, [monthTransactions, baseCurrency, fxRates])
 
+  const saveProfile = async () => {
+    if (!user) return
+    setProfileSaving(true)
+    try {
+      const payload = {
+        full_name: profileForm.full_name.trim() || null,
+        phone: profileForm.phone.trim() || null,
+        date_of_birth: profileForm.date_of_birth || null,
+        country: profileForm.country.trim() || null,
+        address_line1: profileForm.address_line1.trim() || null,
+        address_line2: profileForm.address_line2.trim() || null,
+        city: profileForm.city.trim() || null,
+        state: profileForm.state.trim() || null,
+        postal_code: profileForm.postal_code.trim() || null,
+        occupation: profileForm.occupation.trim() || null,
+        employer: profileForm.employer.trim() || null,
+        annual_income: profileForm.annual_income ? Math.round(Number(profileForm.annual_income)) : null,
+        dependents: Math.max(0, Math.round(Number(profileForm.dependents || 0))),
+        financial_profile_notes: profileForm.financial_profile_notes.trim() || null,
+      }
+      const { error } = await supabase.from('users').update(payload).eq('id', user.id)
+      if (error) throw error
+      setUser((current: any) => current ? { ...current, user_metadata: { ...current.user_metadata, full_name: payload.full_name } } : current)
+      alert('Profile saved successfully.')
+    } catch (error: any) {
+      alert(error?.message || 'Could not save profile.')
+    } finally {
+      setProfileSaving(false)
+    }
+  }
+
   const healthScore = useMemo(() => {
     if (stats.totalIncome <= 0) return 0
 
@@ -700,7 +739,7 @@ const [budgetForm, setBudgetForm] = useState({
       .map(([name, amount]) => ({
         name,
         amount,
-        value: total > 0 ? Number(((amount / total) * 100).toFixed(1)) : 0,
+        value: total > 0 ? Number(((amount / total) * 100)) : 0,
       }))
   }, [monthTransactions])
 
@@ -745,10 +784,40 @@ const [budgetForm, setBudgetForm] = useState({
         category,
         limit,
         spent,
-        percentage: limit > 0 ? Math.min((spent / limit) * 100, 100) : 0,
+        percentage: limit > 0 ? (spent / limit) * 100 : 0,
       }
     })
   }, [budgets, monthTransactions, baseCurrency, fxRates])
+
+  const unbudgetedTransactions = useMemo(() => monthTransactions.filter((transaction) => {
+    if (transaction.transaction_type !== 'expense') return false
+    return !budgets.some((budget) => budget.is_active !== false && String(budget.category || '').toLowerCase() === String(transaction.category || '').toLowerCase() && String(budget.month || '').slice(0, 7) === String(transaction.date || '').slice(0, 7))
+  }), [monthTransactions, budgets])
+
+  const currentFinancialYearTrend = useMemo(() => {
+    const now = new Date()
+    const startYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1
+    const rows: Record<string, any> = {}
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(startYear, 3 + i, 1)
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+      rows[key] = { key, month: d.toLocaleDateString('en-IN', { month: 'short' }), income: 0, expenses: 0, savings: 0, savingsRate: 0 }
+    }
+    transactions.forEach((tx) => {
+      const key = String(tx.date || '').slice(0, 7)
+      if (!rows[key]) return
+      const amount = toBaseAmount(Number(tx.amount || 0), tx.currency || 'INR')
+      if (tx.transaction_type === 'income') rows[key].income += amount
+      else rows[key].expenses += amount
+    })
+    return Object.values(rows).map((row: any) => ({ ...row, savings: row.income - row.expenses, savingsRate: row.income > 0 ? (row.income - row.expenses) / row.income * 100 : 0 }))
+  }, [transactions, baseCurrency, fxRates])
+
+  const waterfallData = useMemo(() => [
+    { name: 'Income', base: 0, value: Math.max(0, stats.totalIncome), display: stats.totalIncome },
+    { name: 'Expenses', base: Math.max(0, stats.totalIncome - stats.totalExpenses), value: stats.totalExpenses, display: -stats.totalExpenses },
+    { name: 'Net Savings', base: Math.min(0, stats.netSavings), value: Math.abs(stats.netSavings), display: stats.netSavings },
+  ], [stats])
 
   const totalAssets = useMemo(
     () => assets.reduce((sum, item) => sum + toBaseAmount(Number(item.current_value || 0), item.currency || 'INR'), 0),
@@ -1416,7 +1485,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
     const payload = {
       user_id: user.id,
       description,
-      amount: Math.round(amount * 10) / 10,
+      amount: Math.round(amount),
       transaction_type: transactionForm.transaction_type,
       category,
       expense_type: transactionForm.transaction_type === 'expense' ? 'variable' : 'other',
@@ -1477,7 +1546,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
     const result = await addTransaction({
       user_id: user.id,
       description: tx.description,
-      amount: Math.round(Number(tx.amount) * 10) / 10,
+      amount: Math.round(Number(tx.amount)),
       transaction_type: tx.transaction_type,
       category: tx.category,
       expense_type: tx.expense_type || (tx.transaction_type === 'expense' ? 'variable' : 'other'),
@@ -1588,7 +1657,7 @@ Current month: ${monthLabel(selectedMonth)}
 Income: ${money(stats.totalIncome, baseCurrency)}
 Expenses: ${money(stats.totalExpenses, baseCurrency)}
 Savings: ${money(stats.netSavings, baseCurrency)}
-Savings rate: ${stats.savingsRate.toFixed(1)}%
+Savings rate: ${stats.savingsRate}%
 
 Top spending categories:
 ${spendingDNA
@@ -1646,7 +1715,7 @@ Do not invent transactions or financial data.
     setIsTouring(true)
     const name = profileName || 'there'
     let summary = ''
-    if (activeTab === 'Overview') summary = `${greeting}, ${name}. This is your financial overview. Your income is ${money(stats.totalIncome)}, expenses are ${money(stats.totalExpenses)}, net savings are ${money(stats.netSavings)}, and your savings rate is ${stats.savingsRate.toFixed(1)} percent. Your largest spending category is ${spendingDNA[0]?.name || 'not available yet'}. I can explain any section if you ask.`
+    if (activeTab === 'Overview') summary = `${greeting}, ${name}. This is your financial overview. Your income is ${money(stats.totalIncome)}, expenses are ${money(stats.totalExpenses)}, net savings are ${money(stats.netSavings)}, and your savings rate is ${stats.savingsRate} percent. Your largest spending category is ${spendingDNA[0]?.name || 'not available yet'}. I can explain any section if you ask.`
     else if (activeTab === 'Transactions') summary = `This is Transactions. You have ${monthTransactions.length} transactions for ${monthLabel(selectedMonth)}. I can add, edit, categorize, import, export or explain them. You can also upload a bill or invoice and I can prepare a transaction for your confirmation.`
     else if (activeTab === 'Budgets') summary = `This is Budgets. You have ${budgetRows.length} budgets. I compare actual spending with each category limit and can tell you which budgets are approaching their limits.`
     else if (activeTab === 'Goals') summary = `This is Goals. You have ${goals.length} goals. I can explain progress, remaining amounts and monthly funding targets.`
@@ -1666,7 +1735,7 @@ Do not invent transactions or financial data.
       Category: tx.category,
       Type: tx.transaction_type,
       ExpenseType: tx.expense_type || '',
-      Amount: Math.round(Number(tx.amount || 0) * 10) / 10,
+      Amount: Math.round(Number(tx.amount || 0)),
       Currency: tx.currency || baseCurrency,
       PaymentMethod: tx.payment_method || '',
       Notes: tx.notes || '',
@@ -1761,7 +1830,7 @@ Month: ${monthLabel(selectedMonth)}
 Income: ${money(stats.totalIncome, baseCurrency)}
 Expenses: ${money(stats.totalExpenses, baseCurrency)}
 Savings: ${money(stats.netSavings, baseCurrency)}
-Savings rate: ${stats.savingsRate.toFixed(1)}%
+Savings rate: ${stats.savingsRate}%
 
 Spending:
 ${spendingDNA
@@ -1800,7 +1869,7 @@ ${spendingDNA
       speakText(insightList.join(' '))
     } catch {
       setInsights([
-        `Your savings rate is ${stats.savingsRate.toFixed(1)}% this month.`,
+        `Your savings rate is ${stats.savingsRate}% this month.`,
         `Your total expenses are ${money(stats.totalExpenses)}.`,
         spendingDNA.length
           ? `${spendingDNA[0].name} is your largest spending category.`
@@ -2498,7 +2567,7 @@ ${spendingDNA
                       <p className={`text-sm ${muted}`}>
                         Your current savings rate is{' '}
                         <strong>
-                          {stats.savingsRate.toFixed(1)}%
+                          {stats.savingsRate}%
                         </strong>
                         .
                       </p>
@@ -2558,7 +2627,7 @@ ${spendingDNA
 
                   <MetricCard
                     title="Savings Rate"
-                    value={`${stats.savingsRate.toFixed(1)}%`}
+                    value={`${stats.savingsRate}%`}
                     icon={<FaPercent />}
                     iconClass="text-violet-500"
                     change={
@@ -4199,7 +4268,7 @@ function MetricCard({
           positive ? 'text-emerald-500' : 'text-red-500'
         }`}
       >
-        {change >= 0 ? '↑' : '↓'} {Math.abs(change).toFixed(1)}% vs
+        {change >= 0 ? '↑' : '↓'} {Math.abs(change)}% vs
         previous month
       </div>
     </motion.div>
