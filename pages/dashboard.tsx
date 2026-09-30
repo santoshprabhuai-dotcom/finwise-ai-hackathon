@@ -2414,19 +2414,6 @@ ${spendingDNA
                 {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}
               </select>
 
-              {activeTab === 'Transactions' && (
-                <button
-                  onClick={() => {
-                    resetTransactionForm()
-                    setShowTransactionModal(true)
-                  }}
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500 text-white font-semibold text-sm hover:bg-teal-600"
-                >
-                  <FaPlus />
-                  Add Transaction
-                </button>
-              )}
-
               <button
                 onClick={() => setShowCoach(true)}
                 className="w-10 h-10 rounded-xl flex items-center justify-center bg-violet-500 text-white hover:bg-violet-600"
