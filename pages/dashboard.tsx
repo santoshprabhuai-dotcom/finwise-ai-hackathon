@@ -4628,7 +4628,7 @@ function MetricCard({
           positive ? 'text-emerald-500' : 'text-red-500'
         }`}
       >
-        {change >= 0 ? '↑' : '↓'} {Math.round((Number.isFinite(change) ? Math.abs(change) : 0) * 100) / 100}% vs
+        {change >= 0 ? '↑' : '↓'} {(Number.isFinite(change) ? Math.abs(change) : 0).toFixed(2)}% vs
         previous month
       </div>
     </motion.div>
