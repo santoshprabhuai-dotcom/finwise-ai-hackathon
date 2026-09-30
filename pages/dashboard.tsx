@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { convertCurrency, formatMoney, SUPPORTED_CURRENCIES } from '@/lib/currency'
 import * as XLSX from 'xlsx'
 import { FINWISE_LOGO_DATA } from '@/lib/finwise-logo'
+import { SAM_COACH_IMAGE } from '@/lib/sam-coach'
 import {
   BarChart,
   Bar,
@@ -2447,7 +2448,7 @@ ${spendingDNA
 
           <motion.img
             key={isSpeaking ? 'speaking' : 'idle'}
-            src={isSpeaking ? '/finwise-guy-speaking.svg' : '/finwise-guy.svg'}
+            src={SAM_COACH_IMAGE}
             alt="FinWise AI robot guide"
             className="absolute left-3 bottom-0 w-32 h-auto drop-shadow-2xl"
             animate={{ rotate: [0, 0.8, 0, -0.8, 0] }}
