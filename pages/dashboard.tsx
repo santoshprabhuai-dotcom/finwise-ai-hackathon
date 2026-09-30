@@ -431,7 +431,7 @@ const [budgetForm, setBudgetForm] = useState({
       const name = profileName || 'there'
       speakText(`${greeting}, ${name}. I’m Sam, your AI Coach. How can I help you today?`)
     }
-  }, [showCoach])
+  }, [showCoach, greeting, profileName])
 
   const stopSpeaking = () => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
@@ -451,7 +451,13 @@ const [budgetForm, setBudgetForm] = useState({
   }
 
   const speakGuide = () => {
-    toggleGuideSpeech()
+    if (isSpeaking) {
+      stopSpeaking()
+      return
+    }
+    window.localStorage.setItem('finwise-voice-enabled', 'true')
+    const name = profileName || 'there'
+    speakText(`${greeting}, ${name}. I’m Sam, your AI Coach. How can I help you today?`)
   }
 
   const startVoiceInput = () => {
@@ -2064,7 +2070,9 @@ ${spendingDNA
       {/* FinWise AI Robot Guide */}
       <div data-finwise-robot className="fixed left-[270px] bottom-24 z-20 hidden lg:block w-60 h-56 pointer-events-none">
         <motion.div
-          animate={{ x: [0, 4, 0, -4, 0], y: [0, -2, 0, -2, 0] }}
+          animate={isTouring
+            ? { x: [0, 120, 250, 120, 0], y: [0, -8, 0, -4, 0] }
+            : { x: [0, 4, 0, -4, 0], y: [0, -2, 0, -2, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           className="absolute inset-x-0 bottom-0 h-full"
         >
