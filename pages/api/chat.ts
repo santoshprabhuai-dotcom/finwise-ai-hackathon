@@ -43,7 +43,7 @@ export default async function handler(
         'X-Title': 'FinWise AI',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'openai/gpt-4o-mini',
         messages: [
           {
             role: 'system',
