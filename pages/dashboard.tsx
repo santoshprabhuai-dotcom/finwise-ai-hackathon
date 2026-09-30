@@ -1132,6 +1132,9 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
       category: 'Food',
       date: new Date().toISOString().split('T')[0],
       currency: baseCurrency,
+      foreign_amount: '',
+      foreign_currency: '',
+      exchange_rate: '',
     })
     setEditingTransactionId(null)
     setSmartCategoryMessage('')
@@ -1145,6 +1148,9 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
       category: transaction.category || (transaction.transaction_type === 'income' ? 'Salary' : 'Food'),
       date: String(transaction.date || '').slice(0, 10),
       currency: transaction.currency || baseCurrency,
+      foreign_amount: String(transaction.foreign_amount ?? ''),
+      foreign_currency: transaction.foreign_currency || '',
+      exchange_rate: String(transaction.exchange_rate ?? ''),
     })
     setEditingTransactionId(transaction.id)
     setShowTransactionModal(true)
@@ -1482,15 +1488,32 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
       ? transactionForm.category
       : ruleBasedCategory(description, transactionForm.transaction_type)
 
+    const foreignAmount = Number(transactionForm.foreign_amount)
+    const foreignCurrency = transactionForm.foreign_currency || ''
+    const suppliedRate = Number(transactionForm.exchange_rate)
+    const hasForeign = Boolean(foreignCurrency && Number.isFinite(foreignAmount) && foreignAmount > 0 && foreignCurrency !== baseCurrency)
+    let localAmount = Math.round(amount)
+    let exchangeRate: number | null = null
+    if (hasForeign) {
+      exchangeRate = Number.isFinite(suppliedRate) && suppliedRate > 0 ? suppliedRate : toBaseAmount(foreignAmount, foreignCurrency) / foreignAmount
+      localAmount = Math.round(foreignAmount * exchangeRate)
+    }
+
     const payload = {
       user_id: user.id,
       description,
-      amount: Math.round(amount),
+      amount: localAmount,
       transaction_type: transactionForm.transaction_type,
       category,
       expense_type: transactionForm.transaction_type === 'expense' ? 'variable' : 'other',
       date: transactionForm.date,
-      currency: transactionForm.currency || baseCurrency,
+      currency: baseCurrency,
+      foreign_amount: hasForeign ? Math.round(foreignAmount) : null,
+      foreign_currency: hasForeign ? foreignCurrency : null,
+      exchange_rate: hasForeign ? exchangeRate : null,
+      exchange_rate_date: hasForeign ? new Date().toISOString().slice(0, 10) : null,
+      fx_source: hasForeign ? (Number.isFinite(suppliedRate) && suppliedRate > 0 ? 'user-provided' : 'live FinWise FX') : null,
+      local_amount: localAmount,
       is_ai_categorized: category !== transactionForm.category,
     }
 
@@ -1546,12 +1569,18 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
     const result = await addTransaction({
       user_id: user.id,
       description: tx.description,
-      amount: Math.round(Number(tx.amount)),
+      amount: Math.round(Number(tx.local_amount ?? tx.amount)),
       transaction_type: tx.transaction_type,
       category: tx.category,
       expense_type: tx.expense_type || (tx.transaction_type === 'expense' ? 'variable' : 'other'),
       date: tx.date,
-      currency: tx.currency || baseCurrency,
+      currency: baseCurrency,
+      foreign_amount: tx.foreign_amount ? Math.round(Number(tx.foreign_amount)) : null,
+      foreign_currency: tx.foreign_currency || null,
+      exchange_rate: tx.exchange_rate || null,
+      exchange_rate_date: tx.foreign_currency ? new Date().toISOString().slice(0, 10) : null,
+      fx_source: tx.fx_source || (tx.foreign_currency ? 'live FinWise FX' : null),
+      local_amount: Math.round(Number(tx.local_amount ?? tx.amount)),
       payment_method: tx.payment_method || null,
       notes: tx.notes || 'Recorded by Sam, AI Coach',
       is_ai_categorized: true,
@@ -2925,7 +2954,7 @@ ${spendingDNA
                   <button type="button" onClick={downloadTransactionsExcel} className="px-4 py-3 rounded-xl border border-emerald-400/40 text-emerald-600 font-semibold flex items-center gap-2 hover:bg-emerald-500/10"><FaDownload /> Excel</button>
                   <button type="button" onClick={printTransactions} className="px-4 py-3 rounded-xl border border-slate-400/40 font-semibold flex items-center gap-2 hover:bg-slate-500/10"><FaDownload /> Print / PDF</button>
                   <label className="px-4 py-3 rounded-xl border border-cyan-400/40 text-cyan-600 font-semibold flex items-center gap-2 hover:bg-cyan-500/10 cursor-pointer">
-                    <FaUpload /> {receiptLoading ? 'Reading…' : 'Bill / Invoice'}
+                    <FaUpload /> {receiptLoading ? 'Reading…' : 'Invoice / Receipt'}
                     <input type="file" className="hidden" accept="image/*,.pdf" disabled={receiptLoading} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleReceiptUpload(file); e.currentTarget.value = '' }} />
                   </label>
                                     <button
