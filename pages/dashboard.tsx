@@ -2077,7 +2077,7 @@ ${spendingDNA
         items.push({
           id,
           title: budget.percentage >= 100 ? 'Budget limit reached' : 'Budget almost full',
-          message: `${budget.category} is at ${Math.round(budget.percentage)}% of your ${monthLabel(selectedMonth)} budget.`,
+          message: `${budget.category} is at ${percent(budget.percentage)}% of your ${monthLabel(selectedMonth)} budget.`,
           tone: 'warning',
         })
       })
@@ -3499,7 +3499,7 @@ ${spendingDNA
                 </div>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${onTrack ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{onTrack ? 'On track' : 'Needs attention'}</span>
               </div>
-              <div className="mt-6 flex items-end justify-between gap-4"><div><p className={`text-xs ${muted}`}>Progress</p><p className="text-2xl font-black">{Math.round(percentage)}%</p></div><div className="text-right"><p className={`text-xs ${muted}`}>Remaining</p><p className="font-bold">{money(toBaseAmount(remaining, currency))}</p></div></div>
+              <div className="mt-6 flex items-end justify-between gap-4"><div><p className={`text-xs ${muted}`}>Progress</p><p className="text-2xl font-black">{percent(percentage)}%</p></div><div className="text-right"><p className={`text-xs ${muted}`}>Remaining</p><p className="font-bold">{money(toBaseAmount(remaining, currency))}</p></div></div>
               <div className={`mt-3 h-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-gray-100'}`}><div className="h-3 rounded-full bg-blue-500" style={{width:`${percentage}%`}} /></div>
               <div className="mt-4 rounded-xl border border-blue-400/20 bg-blue-500/5 p-4">
                 <p className="text-xs font-bold uppercase tracking-wide text-blue-500">Sam recommendation</p>
@@ -3603,7 +3603,7 @@ ${spendingDNA
                   </div>
                   <div className="mt-5 space-y-4">
                     <div>
-                      <div className="flex items-center justify-between text-sm"><span className="font-semibold">Credit utilization</span><span className="font-bold">{latestCredit?.total_credit_limit ? Math.round(creditUtilization) + '%' : '—'}</span></div>
+                      <div className="flex items-center justify-between text-sm"><span className="font-semibold">Credit utilization</span><span className="font-bold">{latestCredit?.total_credit_limit ? percent(creditUtilization) + '%' : '—'}</span></div>
                       <div className={'mt-2 h-2.5 rounded-full ' + (isDark ? 'bg-slate-700' : 'bg-gray-100')}><div className="h-2.5 rounded-full bg-cyan-500" style={{ width: Math.min(Math.max(creditUtilization, 0), 100) + '%' }} /></div>
                     </div>
                     <div className="flex items-center justify-between"><span className={muted}>Late payments, 12 months</span><span className="font-bold">{latestCredit?.late_payments_12m ?? '—'}</span></div>
@@ -4518,7 +4518,7 @@ function MetricCard({
           positive ? 'text-emerald-500' : 'text-red-500'
         }`}
       >
-        {change >= 0 ? '↑' : '↓'} {Math.abs(change)}% vs
+        {change >= 0 ? '↑' : '↓'} {percent(Math.abs(change))}% vs
         previous month
       </div>
     </motion.div>
