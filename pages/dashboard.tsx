@@ -3740,6 +3740,19 @@ ${spendingDNA
                 }`}
               />
 
+              <div className={`rounded-2xl border p-4 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-cyan-50 border-cyan-100'}`}>
+                <p className="text-sm font-bold">Foreign currency details (optional)</p>
+                <p className={`text-xs mt-1 ${muted}`}>For a EUR/USD/etc. invoice, retain the original foreign amount and convert the final total into your reporting currency using the supplied rate or current FinWise FX.</p>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <input type="number" min="0" value={transactionForm.foreign_amount} onChange={(e) => setTransactionForm({...transactionForm, foreign_amount:e.target.value})} placeholder="FC amount" className={`px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`} />
+                  <select value={transactionForm.foreign_currency} onChange={(e) => setTransactionForm({...transactionForm, foreign_currency:e.target.value})} className={`px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
+                    <option value="">FC</option>
+                    {SUPPORTED_CURRENCIES.filter((item) => item.code !== baseCurrency).map((item) => <option key={item.code} value={item.code}>{item.code}</option>)}
+                  </select>
+                  <input type="number" min="0" step="0.000001" value={transactionForm.exchange_rate} onChange={(e) => setTransactionForm({...transactionForm, exchange_rate:e.target.value})} placeholder="Exchange rate" className={`px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`} />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <select
                   value={transactionForm.transaction_type}
