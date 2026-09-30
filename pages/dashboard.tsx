@@ -3424,6 +3424,10 @@ ${spendingDNA
               </div>
               <div className="mt-6 flex items-end justify-between gap-4"><div><p className={`text-xs ${muted}`}>Progress</p><p className="text-2xl font-black">{Math.round(percentage)}%</p></div><div className="text-right"><p className={`text-xs ${muted}`}>Remaining</p><p className="font-bold">{money(toBaseAmount(remaining, currency))}</p></div></div>
               <div className={`mt-3 h-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-gray-100'}`}><div className="h-3 rounded-full bg-blue-500" style={{width:`${percentage}%`}} /></div>
+              <div className="mt-4 rounded-xl border border-blue-400/20 bg-blue-500/5 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-blue-500">Sam recommendation</p>
+                <p className={`text-sm mt-1 ${muted}`}>{onTrack ? `Maintain at least ${money(toBaseAmount(monthlyNeeded,currency))} per month and review progress monthly.` : `Increase planned funding toward ${money(toBaseAmount(monthlyNeeded,currency))} per month, or extend the deadline; Sam can model both scenarios.`}</p>
+              </div>
               <div className="grid grid-cols-2 gap-3 mt-5">
                 <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}><p className={`text-xs ${muted}`}>Saved</p><p className="font-bold">{money(toBaseAmount(current,currency))}</p></div>
                 <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}><p className={`text-xs ${muted}`}>Monthly target</p><p className="font-bold">{money(toBaseAmount(monthlyNeeded,currency))}</p></div>
