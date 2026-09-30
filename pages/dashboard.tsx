@@ -3607,6 +3607,19 @@ ${spendingDNA
                 <div className={`${card}`}><p className={`${muted}`}>Total Liabilities</p><p className="text-2xl font-bold text-red-500 mt-1">{money(totalLiabilities)}</p></div>
                 <div className={`${card}`}><p className={`${muted}`}>Net Worth</p><p className="text-2xl font-bold text-blue-500 mt-1">{money(netWorth)}</p></div>
               </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+                <div className={`${card} rounded-2xl border p-5`}>
+                  <h3 className="font-bold">Net Worth Composition</h3><p className={`text-sm mt-1 ${muted}`}>Assets versus liabilities in reporting currency</p>
+                  <ResponsiveContainer width="100%" height={260}><BarChart data={[{name:'Assets',value:Math.max(0,totalAssets)},{name:'Liabilities',value:Math.max(0,totalLiabilities)},{name:'Net Worth',value:Math.max(0,netWorth)}]}><CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} /><XAxis dataKey="name" /><YAxis /><Tooltip formatter={(value:any)=>money(Number(value))} /><Bar dataKey="value" fill="#3b82f6" radius={[7,7,0,0]} /></BarChart></ResponsiveContainer>
+                </div>
+                <div className={`${card} rounded-2xl border p-5`}>
+                  <h3 className="font-bold">Balance Sheet Ratios</h3>
+                  <div className="space-y-5 mt-6"><div><div className="flex justify-between text-sm"><span>Liabilities / Assets</span><b>{totalAssets > 0 ? percent(totalLiabilities / totalAssets * 100) : 0}%</b></div><div className={`mt-2 h-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-gray-100'}`}><div className="h-3 rounded-full bg-red-500" style={{width:`${Math.min(100,totalAssets>0?totalLiabilities/totalAssets*100:0)}%`}} /></div></div>
+                  <div><div className="flex justify-between text-sm"><span>Net worth / assets</span><b>{totalAssets > 0 ? percent(netWorth / totalAssets * 100) : 0}%</b></div><div className={`mt-2 h-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-gray-100'}`}><div className="h-3 rounded-full bg-emerald-500" style={{width:`${Math.min(100,Math.max(0,totalAssets>0?netWorth/totalAssets*100:0))}%`}} /></div></div>
+                  <div className={`rounded-xl p-4 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}><p className={`text-xs ${muted}`}>Professional view</p><p className="font-bold mt-1">Track asset growth, debt reduction and liquidity separately; Sam can explain what changed between periods.</p></div></div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 <div className={`${card} rounded-2xl border p-5`}>
                   <h3 className="font-bold mb-4">Assets</h3>
