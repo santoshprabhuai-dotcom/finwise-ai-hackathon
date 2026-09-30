@@ -498,6 +498,7 @@ const [budgetForm, setBudgetForm] = useState({
       ).trim()
 
       if (transcript) {
+        setShowCoach(true)
         setCoachInput(transcript)
         askCoach(transcript)
       }
