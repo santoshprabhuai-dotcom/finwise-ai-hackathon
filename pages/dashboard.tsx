@@ -202,6 +202,9 @@ export default function Dashboard() {
   const [fxUpdatedAt, setFxUpdatedAt] = useState('')
 
   const [transactions, setTransactions] = useState<any[]>([])
+  const [transactionSearch, setTransactionSearch] = useState('')
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState('all')
+  const [transactionCategoryFilter, setTransactionCategoryFilter] = useState('all')
   const [budgets, setBudgets] = useState<any[]>([])
   const [goals, setGoals] = useState<any[]>([])
   const [assets, setAssets] = useState<any[]>([])
@@ -700,6 +703,16 @@ const [budgetForm, setBudgetForm] = useState({
         value: total > 0 ? Number(((amount / total) * 100).toFixed(1)) : 0,
       }))
   }, [monthTransactions])
+
+  const filteredTransactions = useMemo(() => {
+    const query = transactionSearch.trim().toLowerCase()
+    return monthTransactions.filter((transaction) => {
+      const matchesSearch = !query || [transaction.description, transaction.category, transaction.payment_method, transaction.notes].some((value) => String(value || '').toLowerCase().includes(query))
+      const matchesType = transactionTypeFilter === 'all' || transaction.transaction_type === transactionTypeFilter
+      const matchesCategory = transactionCategoryFilter === 'all' || transaction.category === transactionCategoryFilter
+      return matchesSearch && matchesType && matchesCategory
+    })
+  }, [monthTransactions, transactionSearch, transactionTypeFilter, transactionCategoryFilter])
 
   const recentTransactions = useMemo(() => {
     return [...monthTransactions]
@@ -2827,7 +2840,19 @@ ${spendingDNA
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+                <input value={transactionSearch} onChange={(e) => setTransactionSearch(e.target.value)} placeholder="Search description, category, payment..." className={`px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`} />
+                <select value={transactionTypeFilter} onChange={(e) => setTransactionTypeFilter(e.target.value)} className={`px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
+                  <option value="all">All types</option><option value="expense">Expenses</option><option value="income">Income</option>
+                </select>
+                <select value={transactionCategoryFilter} onChange={(e) => setTransactionCategoryFilter(e.target.value)} className={`px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
+                  <option value="all">All categories</option>
+                  {Array.from(new Set(monthTransactions.map((tx) => tx.category).filter(Boolean))).sort().map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
+                <button type="button" onClick={() => { setTransactionSearch(''); setTransactionTypeFilter('all'); setTransactionCategoryFilter('all') }} className="px-4 py-3 rounded-xl border font-semibold">Clear filters</button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={downloadTransactionsExcel} className="px-4 py-3 rounded-xl border border-emerald-400/40 text-emerald-600 font-semibold flex items-center gap-2 hover:bg-emerald-500/10"><FaDownload /> Excel</button>
                   <button type="button" onClick={printTransactions} className="px-4 py-3 rounded-xl border border-slate-400/40 font-semibold flex items-center gap-2 hover:bg-slate-500/10"><FaDownload /> Print / PDF</button>
                   <label className="px-4 py-3 rounded-xl border border-cyan-400/40 text-cyan-600 font-semibold flex items-center gap-2 hover:bg-cyan-500/10 cursor-pointer">
@@ -2858,9 +2883,9 @@ ${spendingDNA
               </div>
 
               <div className={`rounded-2xl border overflow-hidden ${card}`}>
-                {monthTransactions.length === 0 ? (
+                {filteredTransactions.length === 0 ? (
                   <div className={`p-12 text-center ${muted}`}>
-                    No transactions found for this month.
+                    No transactions match the current filters.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -2881,7 +2906,7 @@ ${spendingDNA
                       </thead>
 
                       <tbody>
-                        {[...monthTransactions]
+                        {[...filteredTransactions]
                           .sort(
                             (a, b) =>
                               new Date(b.date).getTime() -
