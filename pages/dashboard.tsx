@@ -1131,6 +1131,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
       description: '',
       amount: '',
       transaction_type: 'expense',
+      expense_type: 'variable',
       category: 'Food',
       date: new Date().toISOString().split('T')[0],
       currency: baseCurrency,
