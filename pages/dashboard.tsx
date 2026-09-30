@@ -1783,6 +1783,10 @@ Do not invent transactions or financial data.
       ExpenseType: tx.expense_type || '',
       Amount: Math.round(Number(tx.amount || 0)),
       Currency: tx.currency || baseCurrency,
+      ForeignAmount: tx.foreign_amount == null ? '' : Math.round(Number(tx.foreign_amount)),
+      ForeignCurrency: tx.foreign_currency || '',
+      ExchangeRate: tx.exchange_rate || '',
+      LocalAmount: tx.local_amount == null ? Math.round(Number(tx.amount || 0)) : Math.round(Number(tx.local_amount)),
       PaymentMethod: tx.payment_method || '',
       Notes: tx.notes || '',
     }))
