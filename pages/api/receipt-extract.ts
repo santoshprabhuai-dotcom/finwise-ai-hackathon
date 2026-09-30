@@ -13,7 +13,7 @@ const INCOME_CATEGORIES = [
 const currencies = ['INR','USD','EUR','GBP','BHD','KWD','SAR','QAR','AED','CNY','BDT','PKR','CAD','SGD','AUD','NZD','ZAR','JPY']
 
 const extractJson = (value: string) => {
-  const cleaned = value.replace(/\`\`\`json/gi, '').replace(/\`\`\`/g, '').trim()
+  const cleaned = value.replace(/```json/gi, '').replace(/```/g, '').trim()
   const start = cleaned.indexOf('{')
   const end = cleaned.lastIndexOf('}')
   if (start < 0 || end <= start) return null
@@ -42,12 +42,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    const prompt = \`You extract transaction data from a receipt, invoice or bill for a personal finance app.
+    const prompt = `You extract transaction data from a receipt, invoice or bill for a personal finance app.
 Return ONLY valid JSON:
 {"transaction":{"description":"...","amount":123.45,"transaction_type":"expense","category":"Food","expense_type":"variable","date":"YYYY-MM-DD","currency":"INR","payment_method":null,"notes":"Receipt extracted from FILE"}}
-Rules: amount is the final payable/total amount, positive. Category must be one of \${[...EXPENSE_CATEGORIES,...INCOME_CATEGORIES].join(', ')}. Do not invent missing facts. Use \${baseCurrency} if currency is not visible. Use today \${today || new Date().toISOString().slice(0,10)} for a missing date. User timezone is \${timezone}. If no reliable total is visible, return {"transaction":null,"missing":["amount"]}.
-File: \${fileName}
-\${sourceText ? 'Extracted PDF text:\\n' + sourceText : 'The attached image is the source document.'}\`
+Rules: amount is the final payable/total amount, positive. Category must be one of ${[...EXPENSE_CATEGORIES,...INCOME_CATEGORIES].join(', ')}. Do not invent missing facts. Use ${baseCurrency} if currency is not visible. Use today ${today || new Date().toISOString().slice(0,10)} for a missing date. User timezone is ${timezone}. If no reliable total is visible, return {"transaction":null,"missing":["amount"]}.
+File: ${fileName}
+${sourceText ? 'Extracted PDF text:\\n' + sourceText : 'The attached image is the source document.'}`
 
     let messages: any[]
     if (sourceText) {
@@ -65,7 +65,7 @@ File: \${fileName}
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: \`Bearer \${apiKey}\`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://finwise-ai.vercel.app',
         'X-Title': 'FinWise AI Receipt Reader',
@@ -94,7 +94,7 @@ File: \${fileName}
     if (!Number.isFinite(transaction.amount) || transaction.amount <= 0) return res.status(200).json({ transaction: null, missing: ['amount'] })
     if (!currencies.includes(transaction.currency)) transaction.currency = baseCurrency
     transaction.date = String(transaction.date || today || new Date().toISOString().slice(0,10)).slice(0,10)
-    transaction.notes = transaction.notes || \`Extracted from \${fileName}\`
+    transaction.notes = transaction.notes || `Extracted from ${fileName}`
 
     return res.status(200).json({ transaction })
   } catch (error) {
