@@ -1508,7 +1508,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
     setCoachLoading(true)
 
     try {
-      const looksLikeTransaction = /\\b(record|add|register|log|save|paid|spent|bought|purchase|received|earned|salary|income|expense|transaction|bill|invoice)\\b/i.test(userMessage) || /(?:₹|rs\\.?|inr|usd|\\$|eur|gbp|bhd|dinar)\\s*\\d|\\d+(?:\\.\\d+)?\\s*(?:rupees?|dollars?|dinars?)/i.test(userMessage)
+      const looksLikeTransaction = /\b(record|add|register|log|save|paid|spent|bought|purchase|received|earned|salary|income|expense|transaction|bill|invoice)\b/i.test(userMessage) || /(?:₹|rs\\.?|inr|usd|\\$|eur|gbp|bhd|dinar)\\s*\\d|\\d+(?:\\.\\d+)?\\s*(?:rupees?|dollars?|dinars?)/i.test(userMessage)
 
       if (looksLikeTransaction) {
         const actionResponse = await fetch('/api/coach-action', {
@@ -1538,7 +1538,7 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
           setPendingTransactionBudget({ budgeted: Boolean(matchingBudget), limit: budgetedAmount, spent: alreadySpent, projected, remaining: Math.max(0, budgetedAmount - projected) })
           setCoachMessages((current) => [...current, {
             role: 'assistant',
-            content: `I understood this as a transaction. Please confirm before I save it.\\n\\n${tx.transaction_type === 'income' ? 'Income' : 'Expense'}: ${money(Number(tx.amount), tx.currency || baseCurrency)}\\nDescription: ${tx.description}\\nCategory: ${tx.category}\\nType: ${tx.expense_type || 'other'}\\nDate: ${tx.date}\\nBudget: ${matchingBudget ? `Budgeted — ${money(budgetedAmount)} limit; projected spend ${money(projected)}.` : 'Not budgeted — no matching budget was found.'}`,
+            content: `I understood this as a transaction. Please confirm before I save it.\n\n${tx.transaction_type === 'income' ? 'Income' : 'Expense'}: ${money(Number(tx.amount), tx.currency || baseCurrency)}\nDescription: ${tx.description}\nCategory: ${tx.category}\nType: ${tx.expense_type || 'other'}\nDate: ${tx.date}\nBudget: ${matchingBudget ? `Budgeted — ${money(budgetedAmount)} limit; projected spend ${money(projected)}.` : 'Not budgeted — no matching budget was found.'}`,
           }])
           speakText(`I found a transaction for ${money(Number(tx.amount), tx.currency || baseCurrency)} under ${tx.category}. Please confirm if you want me to save it.`)
           setCoachLoading(false)
@@ -1667,7 +1667,7 @@ Do not invent transactions or financial data.
 
   const handleReceiptUpload = async (file?: File) => {
     if (!file || !user) return
-    if (!/^image\\/(jpeg|png|webp|heic|heif)$/.test(file.type) && file.type !== 'application/pdf') {
+    if (!/^image\/(jpeg|png|webp|heic|heif)$/.test(file.type) && file.type !== 'application/pdf') {
       alert('Please upload a JPG, PNG, WEBP, HEIC/HEIF image or PDF.')
       return
     }
@@ -1705,7 +1705,7 @@ Do not invent transactions or financial data.
       setPendingTransaction(tx)
       setPendingTransactionBudget({ budgeted: Boolean(matchingBudget), limit, spent, projected: spent + toBaseAmount(Number(tx.amount || 0), tx.currency || baseCurrency), remaining: Math.max(0, limit - spent - toBaseAmount(Number(tx.amount || 0), tx.currency || baseCurrency)) })
       setShowCoach(true)
-      setCoachMessages((current) => [...current, { role: 'assistant', content: `I read ${file.name}. Please review and confirm before I save it.\\n\\n${tx.description} — ${money(Number(tx.amount), tx.currency || baseCurrency)}\\nCategory: ${tx.category}\\nDate: ${tx.date}\\nBudget: ${matchingBudget ? 'Budgeted' : 'Not budgeted'}` }])
+      setCoachMessages((current) => [...current, { role: 'assistant', content: `I read ${file.name}. Please review and confirm before I save it.\n\n${tx.description} — ${money(Number(tx.amount), tx.currency || baseCurrency)}\nCategory: ${tx.category}\nDate: ${tx.date}\nBudget: ${matchingBudget ? 'Budgeted' : 'Not budgeted'}` }])
       speakText('I read the bill and prepared a transaction. Please review and confirm it before I save it.')
     } catch (error: any) {
       alert(error?.message || 'Could not read this bill or invoice.')
