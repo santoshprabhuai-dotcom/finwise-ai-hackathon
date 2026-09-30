@@ -3671,7 +3671,7 @@ ${spendingDNA
               </div>
 
               <div className={`${card} rounded-2xl border p-5`}>
-                <div className="flex items-center justify-between mb-4"><h3 className="font-bold">Credit report history</h3><a className="text-sm text-blue-500 hover:underline" href="https://www.cibil.com/freecibilscore" target="_blank" rel="noreferrer">Get official CIBIL report</a></div>
+                <div className="flex items-center justify-between mb-4"><h3 className="font-bold">Credit report history</h3><div className="flex flex-wrap gap-2"><a className="text-xs font-bold px-3 py-2 rounded-lg bg-blue-500 text-white" href="https://www.cibil.com/freecibilscore" target="_blank" rel="noreferrer">CIBIL</a><a className="text-xs font-bold px-3 py-2 rounded-lg border border-blue-300 text-blue-600" href="https://www.experian.in/" target="_blank" rel="noreferrer">Experian</a><a className="text-xs font-bold px-3 py-2 rounded-lg border border-cyan-300 text-cyan-600" href="https://www.crifhighmark.com/your-credit-score" target="_blank" rel="noreferrer">CRIF</a></div></div>
                 {creditProfiles.length === 0 ? <p className={`${muted}`}>Add or import a report to start tracking.</p> : creditProfiles.map((profile) => (
                   <div key={profile.id} className="flex flex-wrap items-center justify-between gap-3 border-b last:border-b-0 py-3">
                     <div><p className="font-semibold">{dateLabel(profile.report_date)} • CIBIL {profile.cibil_score ?? '—'}</p><p className={`${muted} text-xs`}>{profile.late_payments_12m || 0} late payment(s) in last 12 months • {profile.other_score_name || 'No other score'}</p></div>
