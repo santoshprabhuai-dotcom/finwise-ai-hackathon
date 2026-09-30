@@ -1629,6 +1629,65 @@ Calculated monthly contribution: ${formatMoney(Math.ceil(monthly), goalForm.curr
     setCoachLoading(true)
 
     try {
+      const lower = userMessage.toLowerCase()
+      const navigation: Array<[RegExp,string]> = [
+        [/\b(open|show|go to|take me to).*transaction/, 'Transactions'],
+        [/\b(open|show|go to|take me to).*budget/, 'Budgets'],
+        [/\b(open|show|go to|take me to).*goal/, 'Goals'],
+        [/\b(open|show|go to|take me to).*(net worth|assets|liabilities)/, 'Net Worth'],
+        [/\b(open|show|go to|take me to).*financial position/, 'Financial Position'],
+        [/\b(open|show|go to|take me to).*credit/, 'Credit Health'],
+        [/\b(open|show|go to|take me to).*(insight|analysis)/, 'AI Insights'],
+        [/\b(open|show|go to|take me to).*import/, 'Import'],
+        [/\b(open|show|go to|take me to).*setting/, 'Settings'],
+        [/\b(open|show|go to|take me to).*overview/, 'Overview'],
+      ]
+      for (const [pattern, tab] of navigation) {
+        if (pattern.test(lower)) {
+          goTab(tab)
+          const response = 'Opening ' + tab + '. I can explain this page, read it aloud, or help you use its features.'
+          setCoachMessages((current) => [...current, { role: 'assistant', content: response }])
+          speakText(response)
+          setCoachLoading(false)
+          return
+        }
+      }
+      if (/\b(add|create|record|set up)\s+(a\s+)?budget\b/i.test(lower)) {
+        resetBudgetForm()
+        setShowBudgetModal(true)
+        const response = 'I opened the budget form. Tell me the category, monthly limit and month, and I will prepare it for you.'
+        setCoachMessages((current) => [...current, { role: 'assistant', content: response }])
+        speakText(response)
+        setCoachLoading(false)
+        return
+      }
+      if (/\b(add|create|record|plan)\s+(a\s+)?goal\b/i.test(lower)) {
+        setEditingGoalId(null)
+        setGoalPlanMessage('')
+        setGoalForm((current) => ({ ...current, currency: baseCurrency }))
+        setShowGoalModal(true)
+        const response = 'I opened Goal Planning. Tell me the goal, target amount and target date, and I will help build the plan.'
+        setCoachMessages((current) => [...current, { role: 'assistant', content: response }])
+        speakText(response)
+        setCoachLoading(false)
+        return
+      }
+      if (/\b(add|record)\s+(an?\s+)?asset\b/i.test(lower)) {
+        setShowAssetModal(true)
+        const response = 'I opened the Asset form. Tell me the asset name, type, value and date.'
+        setCoachMessages((current) => [...current, { role: 'assistant', content: response }])
+        speakText(response)
+        setCoachLoading(false)
+        return
+      }
+      if (/\b(add|record)\s+(a\s+)?liabilit(y|ies)\b/i.test(lower)) {
+        setShowLiabilityModal(true)
+        const response = 'I opened the Liability form. Tell me the liability type, outstanding amount and key terms.'
+        setCoachMessages((current) => [...current, { role: 'assistant', content: response }])
+        speakText(response)
+        setCoachLoading(false)
+        return
+      }
       const looksLikeTransaction = /\b(record|add|register|log|save|paid|spent|bought|purchase|received|earned|salary|income|expense|transaction|bill|invoice)\b/i.test(userMessage) || /(?:₹|rs\\.?|inr|usd|\\$|eur|gbp|bhd|dinar)\\s*\\d|\\d+(?:\\.\\d+)?\\s*(?:rupees?|dollars?|dinars?)/i.test(userMessage)
 
       if (looksLikeTransaction) {
