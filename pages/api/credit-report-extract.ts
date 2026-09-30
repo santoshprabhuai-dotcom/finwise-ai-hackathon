@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
+export const config = {
+  api: { bodyParser: { sizeLimit: '12mb' } },
+}
+
 const extractJson = (value: string) => {
   const cleaned = value.replace(/\`\`\`json/gi, '').replace(/\`\`\`/g, '').trim()
   const start = cleaned.indexOf('{')
