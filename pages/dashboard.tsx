@@ -2564,6 +2564,15 @@ ${spendingDNA
             <div className="absolute right-12 -bottom-2 w-4 h-4 bg-white border-r border-b border-cyan-300 rotate-45" />
           </div>
 
+          <button
+            type="button"
+            onClick={isSpeaking ? stopSpeaking : readCurrentPage}
+            className="absolute bottom-20 left-[84px] sm:left-[100px] lg:left-[116px] z-10 pointer-events-auto w-10 h-10 rounded-full bg-slate-950/90 text-cyan-300 border border-cyan-300 shadow-lg flex items-center justify-center"
+            title={isSpeaking ? 'Stop Sam speaking' : 'Sam: read this page'}
+            aria-label={isSpeaking ? 'Stop Sam speaking' : 'Sam: read this page'}
+          >
+            {isSpeaking ? <FaStop /> : <FaVolumeUp />}
+          </button>
           <motion.img
             key={isSpeaking ? 'speaking' : 'idle'}
             src={SAM_COACH_IMAGE}
