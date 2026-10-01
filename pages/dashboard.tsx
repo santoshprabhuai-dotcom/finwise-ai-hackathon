@@ -3149,7 +3149,7 @@ ${spendingDNA
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
-                  <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 text-xs">
                     <div><p className={muted}>Income</p><p className="font-black text-emerald-500">{money(stats.totalIncome)}</p></div>
                     <div><p className={muted}>Major expenses</p><p className="font-black text-red-500">{waterfallData.filter((x:any) => x.kind === 'expense').slice(0,4).map((x:any) => x.name).join(' • ') || 'None'}</p></div>
                     <div><p className={muted}>Net savings</p><p className={`font-black ${stats.netSavings >= 0 ? 'text-blue-500' : 'text-orange-500'}`}>{money(stats.netSavings)}</p></div>
@@ -3713,7 +3713,7 @@ ${spendingDNA
                 <p className="text-xs font-bold uppercase tracking-wide text-blue-500">Sam recommendation</p>
                 <p className={`text-sm mt-1 ${muted}`}>{onTrack ? `Maintain at least ${money(toBaseAmount(monthlyNeeded,currency))} per month and review progress monthly.` : `Increase planned funding toward ${money(toBaseAmount(monthlyNeeded,currency))} per month, or extend the deadline; Sam can model both scenarios.`}</p>
               </div>
-              <div className="grid grid-cols-2 gap-3 mt-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
                 <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}><p className={`text-xs ${muted}`}>Saved</p><p className="font-bold">{money(toBaseAmount(current,currency))}</p></div>
                 <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}><p className={`text-xs ${muted}`}>Monthly target</p><p className="font-bold">{money(toBaseAmount(monthlyNeeded,currency))}</p></div>
               </div>
@@ -4159,7 +4159,7 @@ ${spendingDNA
               <div className={`rounded-2xl border p-4 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-cyan-50 border-cyan-100'}`}>
                 <p className="text-sm font-bold">Foreign currency details (optional)</p>
                 <p className={`text-xs mt-1 ${muted}`}>For a EUR/USD/etc. invoice, retain the original foreign amount and convert the final total into your reporting currency using the supplied rate or current FinWise FX.</p>
-                <div className="grid grid-cols-3 gap-2 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
                   <input type="number" min="0" value={transactionForm.foreign_amount} onChange={(e) => setTransactionForm({...transactionForm, foreign_amount:e.target.value})} placeholder="FC amount" className={`px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`} />
                   <select value={transactionForm.foreign_currency} onChange={(e) => setTransactionForm({...transactionForm, foreign_currency:e.target.value})} className={`px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
                     <option value="">FC</option>
@@ -4169,7 +4169,7 @@ ${spendingDNA
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <select
                   value={transactionForm.transaction_type}
                   onChange={(e) => {
@@ -4300,7 +4300,7 @@ ${spendingDNA
                 className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}
               />
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className={`block text-xs font-semibold mb-1 ${muted}`}>Inflation %</label>
                   <input
