@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { convertCurrency, formatMoney, SUPPORTED_CURRENCIES } from '@/lib/currency'
 import * as XLSX from 'xlsx'
@@ -321,6 +321,8 @@ const [budgetForm, setBudgetForm] = useState({
   const [pendingTransactionBudget, setPendingTransactionBudget] = useState<any>(null)
   const [receiptLoading, setReceiptLoading] = useState(false)
   const [isTouring, setIsTouring] = useState(false)
+  const [samPosition, setSamPosition] = useState({ right: 16, bottom: 80 })
+  const samDragRef = useRef<{ active: boolean; offsetX: number; offsetY: number }>({ active: false, offsetX: 0, offsetY: 0 })
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -333,6 +335,48 @@ const [budgetForm, setBudgetForm] = useState({
   const [insightsLoading, setInsightsLoading] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileForm, setProfileForm] = useState({ full_name:'', phone:'', date_of_birth:'', country:'', address_line1:'', address_line2:'', city:'', state:'', postal_code:'', occupation:'', employer:'', annual_income:'', dependents:'0', financial_profile_notes:'' })
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('finwise-sam-position')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Number.isFinite(parsed?.right) && Number.isFinite(parsed?.bottom)) {
+          setSamPosition({ right: Math.max(8, parsed.right), bottom: Math.max(8, parsed.bottom) })
+        }
+      }
+    } catch {}
+  }, [])
+
+  const startSamDrag = (event: React.PointerEvent<HTMLImageElement>) => {
+    event.preventDefault()
+    const rect = event.currentTarget.getBoundingClientRect()
+    samDragRef.current = {
+      active: true,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+    }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveSamDrag = (event: React.PointerEvent<HTMLImageElement>) => {
+    if (!samDragRef.current.active) return
+    const width = event.currentTarget.getBoundingClientRect().width
+    const height = event.currentTarget.getBoundingClientRect().height
+    const left = Math.min(Math.max(8, event.clientX - samDragRef.current.offsetX), Math.max(8, window.innerWidth - width - 8))
+    const top = Math.min(Math.max(56, event.clientY - samDragRef.current.offsetY), Math.max(56, window.innerHeight - height - 8))
+    const next = {
+      right: Math.max(8, window.innerWidth - left - width),
+      bottom: Math.max(8, window.innerHeight - top - height),
+    }
+    setSamPosition(next)
+    try { window.localStorage.setItem('finwise-sam-position', JSON.stringify(next)) } catch {}
+  }
+
+  const stopSamDrag = (event?: React.PointerEvent<HTMLImageElement>) => {
+    samDragRef.current.active = false
+    if (event) event.currentTarget.releasePointerCapture?.(event.pointerId)
+  }
 
   const isDark = theme === 'dark'
 
@@ -2462,19 +2506,23 @@ ${spendingDNA
       )}
 
       {/* FinWise AI Robot Guide */}
-      <div data-finwise-robot className="fixed right-2 sm:right-4 bottom-20 lg:left-[270px] lg:right-auto lg:bottom-24 z-20 block w-44 sm:w-52 lg:w-60 h-48 sm:h-52 lg:h-56 pointer-events-none">
+      <div
+        data-finwise-robot
+        className="fixed z-40 block w-44 sm:w-52 lg:w-60 h-48 sm:h-52 lg:h-56"
+        style={{ right: samPosition.right, bottom: samPosition.bottom }}
+      >
         <motion.div
           animate={isTouring
-            ? { x: [0, 120, 250, 120, 0], y: [0, -8, 0, -4, 0] }
+            ? { x: [0, 70, 150, 70, 0], y: [0, -8, 0, -4, 0] }
             : { x: [0, 4, 0, -4, 0], y: [0, -2, 0, -2, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute inset-x-0 bottom-0 h-full"
+          className="absolute inset-x-0 bottom-0 h-full pointer-events-none"
         >
           <div className="absolute top-0 right-0 w-40 sm:w-48 lg:w-52 rounded-2xl bg-white text-slate-900 px-3 py-3 shadow-2xl border border-cyan-300">
             <div className="flex items-start gap-2">
               <div className="flex-1 text-xs font-extrabold leading-tight">
-                Plan with AI.<br />
-                <span className="text-blue-600">Sam • AI Coach</span>
+                Meet Sam, your AI Coach.<br />
+                <span className="text-blue-600">Sam • FinWise AI Coach</span>
               </div>
               <button
                 type="button"
@@ -2488,7 +2536,7 @@ ${spendingDNA
               </button>
             </div>
             <div className="mt-2 text-[10px] font-semibold text-slate-500">
-              {isSpeaking ? 'Speaking • tap to stop' : 'Sam • Read this page'}
+              {isSpeaking ? 'Speaking • tap to stop' : 'Sam • Read and explain this page'}
             </div>
             <div className="mt-2 flex gap-2 pointer-events-auto">
               <button type="button" onClick={readCurrentPage} className="px-2.5 py-1.5 rounded-lg bg-cyan-500 text-white text-[10px] font-bold">Read page</button>
@@ -2500,8 +2548,13 @@ ${spendingDNA
           <motion.img
             key={isSpeaking ? 'speaking' : 'idle'}
             src={SAM_COACH_IMAGE}
-            alt="FinWise AI robot guide"
-            className="absolute left-0 sm:left-2 lg:left-3 bottom-0 w-24 sm:w-28 lg:w-32 h-auto drop-shadow-2xl"
+            alt="Sam, the FinWise AI Coach"
+            draggable={false}
+            onPointerDown={startSamDrag}
+            onPointerMove={moveSamDrag}
+            onPointerUp={stopSamDrag}
+            onPointerCancel={stopSamDrag}
+            className="absolute left-0 sm:left-2 lg:left-3 bottom-0 w-24 sm:w-28 lg:w-32 h-auto drop-shadow-2xl pointer-events-auto cursor-grab active:cursor-grabbing select-none touch-none"
             animate={{ rotate: [0, 0.8, 0, -0.8, 0] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
           />
