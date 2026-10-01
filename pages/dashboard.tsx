@@ -336,6 +336,21 @@ const [budgetForm, setBudgetForm] = useState({
   const [insightsLoading, setInsightsLoading] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileForm, setProfileForm] = useState({ full_name:'', phone:'', date_of_birth:'', country:'', address_line1:'', address_line2:'', city:'', state:'', postal_code:'', occupation:'', employer:'', annual_income:'', dependents:'0', financial_profile_notes:'' })
+  const [linkedinUrl, setLinkedinUrl] = useState('')
+  const [coachVoice, setCoachVoice] = useState<'male' | 'female'>('female')
+  const [musicEnabled, setMusicEnabled] = useState(false)
+  const [musicStatus, setMusicStatus] = useState('Music is off')
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const musicOscillatorsRef = useRef<OscillatorNode[]>([])
+
+  useEffect(() => {
+    try {
+      setLinkedinUrl(window.localStorage.getItem(`finwise-linkedin-${user?.id || 'guest'}`) || '')
+      const savedVoice = window.localStorage.getItem('finwise-coach-voice')
+      if (savedVoice === 'male' || savedVoice === 'female') setCoachVoice(savedVoice)
+      setMusicEnabled(window.localStorage.getItem('finwise-music-enabled') === 'true')
+    } catch {}
+  }, [user?.id])
 
   useEffect(() => {
     try {
@@ -477,8 +492,11 @@ const [budgetForm, setBudgetForm] = useState({
     setIsSpeaking(true)
 
     const utterance = new SpeechSynthesisUtterance(message)
-    utterance.rate = 0.95
-    utterance.pitch = 1.05
+    const voices = window.speechSynthesis.getVoices()
+    const preferred = voices.find((voice) => /en-IN|en-GB|en-US/i.test(voice.lang) && (coachVoice === 'female' ? /female|zira|samantha|karen|serena|aria|jenny/i.test(voice.name) : /male|david|daniel|george|guy|ryan/i.test(voice.name)))
+    if (preferred) utterance.voice = preferred
+    utterance.rate = 0.92
+    utterance.pitch = coachVoice === 'female' ? 1.02 : 0.88
     utterance.volume = 1
     utterance.lang = 'en-IN'
 
@@ -4000,6 +4018,26 @@ ${spendingDNA
               <div className="mb-6">
                 <h2 className="text-2xl font-bold">Profile & Settings</h2>
                 <p className={`text-sm ${muted}`}>Build an exhaustive profile so Sam can personalize planning, goals, budgets, insights and cash-flow analysis.</p>
+              </div>
+              <div className={`rounded-2xl border p-6 mb-5 ${card}`}>
+                <h3 className="text-lg font-bold mb-3">Sam & experience</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label className={`block text-sm font-semibold mb-1 ${muted}`}>Sam's voice</label>
+                    <select value={coachVoice} onChange={(e) => { const value = e.target.value as 'male' | 'female'; setCoachVoice(value); window.localStorage.setItem('finwise-coach-voice', value) }} className={`w-full px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
+                      <option value="female">Professional female voice</option><option value="male">Professional male voice</option>
+                    </select>
+                  </div>
+                  <div><label className={`block text-sm font-semibold mb-1 ${muted}`}>Background music</label>
+                    <button type="button" onClick={() => { const next = !musicEnabled; setMusicEnabled(next); window.localStorage.setItem('finwise-music-enabled', String(next)); setMusicStatus(next ? 'Music preference saved. Start playback using the music control after interacting with the page.' : 'Music is off') }} className="w-full px-3 py-3 rounded-xl bg-teal-600 text-white font-semibold">{musicEnabled ? 'Music enabled' : 'Enable background music'}</button>
+                    <p className={`mt-1 text-xs ${muted}`}>{musicStatus}. Browsers require a user gesture before audio can play.</p>
+                  </div>
+                </div>
+              </div>
+              <div className={`rounded-2xl border p-6 mb-5 ${card}`}>
+                <h3 className="text-lg font-bold mb-3">Professional profile</h3>
+                <label className={`block text-sm font-semibold mb-1 ${muted}`}>LinkedIn profile URL</label>
+                <input type="url" value={linkedinUrl} onChange={(e) => { setLinkedinUrl(e.target.value); try { window.localStorage.setItem(`finwise-linkedin-${user?.id || 'guest'}`, e.target.value) } catch {} }} placeholder="https://www.linkedin.com/in/your-profile" className={`w-full px-4 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`} />
+                <p className={`mt-1 text-xs ${muted}`}>Saved in this browser for this account.</p>
               </div>
               <div className={`rounded-2xl border p-6 ${card}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
