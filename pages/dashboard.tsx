@@ -48,6 +48,7 @@ import {
   FaLandmark,
   FaBalanceScale,
   FaCreditCard,
+  FaBars,
 } from 'react-icons/fa'
 
 import {
@@ -216,6 +217,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   const [activeTab, setActiveTab] = useState('Overview')
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()
@@ -2333,6 +2335,7 @@ ${spendingDNA
 
   const goTab = (tab: string) => {
     setActiveTab(tab)
+    setIsMobileNavOpen(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -2414,8 +2417,52 @@ ${spendingDNA
         </div>
       </aside>
 
+      {/* Mobile navigation */}
+      {isMobileNavOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" data-finwise-no-print>
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setIsMobileNavOpen(false)}
+            className="absolute inset-0 bg-black/50"
+          />
+          <aside className="relative w-[min(84vw,20rem)] h-full bg-slate-950 text-white shadow-2xl overflow-y-auto">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between gap-3">
+              <div className="rounded-xl overflow-hidden bg-slate-950 flex-1 max-w-[11rem]">
+                <img src={FINWISE_LOGO_DATA} alt="FinWise AI" className="w-full h-auto object-contain" />
+              </div>
+              <button type="button" onClick={() => setIsMobileNavOpen(false)} className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center" aria-label="Close navigation">
+                <FaTimes />
+              </button>
+            </div>
+            <nav className="p-3 space-y-1">
+              {nav.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => goTab(item.label)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
+                    activeTab === item.label
+                      ? 'bg-teal-500 text-white'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+            <div className="p-3 border-t border-slate-800 mt-2">
+              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-slate-300 hover:bg-red-500/10 hover:text-red-400">
+                <FaSignOutAlt />
+                Logout
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
       {/* FinWise AI Robot Guide */}
-      <div data-finwise-robot className="fixed left-[270px] bottom-24 z-20 hidden lg:block w-60 h-56 pointer-events-none">
+      <div data-finwise-robot className="fixed right-2 sm:right-4 bottom-20 lg:left-[270px] lg:right-auto lg:bottom-24 z-20 block w-44 sm:w-52 lg:w-60 h-48 sm:h-52 lg:h-56 pointer-events-none">
         <motion.div
           animate={isTouring
             ? { x: [0, 120, 250, 120, 0], y: [0, -8, 0, -4, 0] }
@@ -2423,7 +2470,7 @@ ${spendingDNA
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           className="absolute inset-x-0 bottom-0 h-full"
         >
-          <div className="absolute top-0 right-1 w-52 rounded-2xl bg-white text-slate-900 px-3 py-3 shadow-2xl border border-cyan-300">
+          <div className="absolute top-0 right-0 w-40 sm:w-48 lg:w-52 rounded-2xl bg-white text-slate-900 px-3 py-3 shadow-2xl border border-cyan-300">
             <div className="flex items-start gap-2">
               <div className="flex-1 text-xs font-extrabold leading-tight">
                 Plan with AI.<br />
@@ -2443,14 +2490,18 @@ ${spendingDNA
             <div className="mt-2 text-[10px] font-semibold text-slate-500">
               {isSpeaking ? 'Speaking • tap to stop' : 'Sam • Read this page'}
             </div>
-            <div className="mt-2 flex gap-2 pointer-events-auto">\n              <button type="button" onClick={readCurrentPage} className="px-2.5 py-1.5 rounded-lg bg-cyan-500 text-white text-[10px] font-bold">Read page</button>\n              {isSpeaking && <button type="button" onClick={stopSpeaking} className="px-2.5 py-1.5 rounded-lg bg-red-500 text-white text-[10px] font-bold">Stop</button>}\n            </div>\n            <div className="absolute right-12 -bottom-2 w-4 h-4 bg-white border-r border-b border-cyan-300 rotate-45" />
+            <div className="mt-2 flex gap-2 pointer-events-auto">
+              <button type="button" onClick={readCurrentPage} className="px-2.5 py-1.5 rounded-lg bg-cyan-500 text-white text-[10px] font-bold">Read page</button>
+              {isSpeaking && <button type="button" onClick={stopSpeaking} className="px-2.5 py-1.5 rounded-lg bg-red-500 text-white text-[10px] font-bold">Stop</button>}
+            </div>
+            <div className="absolute right-12 -bottom-2 w-4 h-4 bg-white border-r border-b border-cyan-300 rotate-45" />
           </div>
 
           <motion.img
             key={isSpeaking ? 'speaking' : 'idle'}
             src={SAM_COACH_IMAGE}
             alt="FinWise AI robot guide"
-            className="absolute left-3 bottom-0 w-32 h-auto drop-shadow-2xl"
+            className="absolute left-0 sm:left-2 lg:left-3 bottom-0 w-24 sm:w-28 lg:w-32 h-auto drop-shadow-2xl"
             animate={{ rotate: [0, 0.8, 0, -0.8, 0] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
           />
@@ -2467,19 +2518,22 @@ ${spendingDNA
               : 'bg-white/95 border-gray-200'
           } backdrop-blur`}
         >
-          <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-bold">{activeTab}</h1>
+          <div className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <button type="button" onClick={() => setIsMobileNavOpen(true)} className="lg:hidden w-10 h-10 shrink-0 rounded-xl bg-teal-500 text-white flex items-center justify-center" aria-label="Open navigation">
+                <FaBars />
+              </button>
+              <h1 className="text-lg sm:text-xl font-bold truncate">{activeTab}</h1>
               <p className={`text-xs ${muted}`}>
                 {monthLabel(selectedMonth)}
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className={`px-3 py-2 rounded-xl border text-sm ${
+                className={`hidden sm:block px-3 py-2 rounded-xl border text-sm ${
                   isDark
                     ? 'bg-slate-800 border-slate-700'
                     : 'bg-white border-gray-200'
@@ -2505,7 +2559,7 @@ ${spendingDNA
                 })}
               </select>
 
-              <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} title={fxUpdatedAt ? `FX rates updated ${fxUpdatedAt}` : 'Display currency'} className={`px-3 py-2 rounded-xl border text-sm max-w-[150px] ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
+              <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} title={fxUpdatedAt ? `FX rates updated ${fxUpdatedAt}` : 'Display currency'} className={`hidden sm:block px-3 py-2 rounded-xl border text-sm max-w-[150px] ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
                 {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}
               </select>
 
@@ -2747,7 +2801,7 @@ ${spendingDNA
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-7"
               >
-                <h2 className="text-3xl font-bold">
+                <h2 className="text-2xl sm:text-3xl font-bold">
                   {greeting},{' '}
                   {user?.user_metadata?.full_name || 'Friend'} 👋
                 </h2>
@@ -4629,7 +4683,7 @@ function MetricCard({
           positive ? 'text-emerald-500' : 'text-red-500'
         }`}
       >
-        {change >= 0 ? '↑' : '↓'} {(Number.isFinite(change) ? Math.abs(change) : 0).toFixed(2)}% vs
+        {change >= 0 ? '↑' : '↓'} {percent(Math.abs(change)).toFixed(2)}% vs
         previous month
       </div>
     </motion.div>
