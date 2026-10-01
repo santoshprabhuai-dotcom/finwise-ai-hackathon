@@ -4031,7 +4031,7 @@ ${spendingDNA
               <div className={`rounded-2xl border p-6 mb-5 ${card}`}>
                 <h3 className="text-lg font-bold mb-3">Sam & experience</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className={`block text-sm font-semibold mb-1 ${muted}`}>Sam's voice</label>
+                  <div><label className={`block text-sm font-semibold mb-1 ${muted}`}>Sam&apos;s voice</label>
                     <select value={coachVoice} onChange={(e) => { const value = e.target.value as 'male' | 'female'; setCoachVoice(value); window.localStorage.setItem('finwise-coach-voice', value) }} className={`w-full px-3 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
                       <option value="female">Professional female voice</option><option value="male">Professional male voice</option>
                     </select>
