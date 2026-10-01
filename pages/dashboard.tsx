@@ -4683,7 +4683,7 @@ function MetricCard({
           positive ? 'text-emerald-500' : 'text-red-500'
         }`}
       >
-        {change >= 0 ? '↑' : '↓'} {percent(Math.abs(change)).toFixed(2)}% vs
+        {change >= 0 ? '↑' : '↓'} {(Math.round(Math.abs(change) * 100) / 100).toFixed(2)}% vs
         previous month
       </div>
     </motion.div>
