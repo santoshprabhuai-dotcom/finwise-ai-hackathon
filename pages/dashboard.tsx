@@ -90,6 +90,7 @@ const COLORS = [
 ]
 
 const money = (value: number, currency: string = 'INR') => formatMoney(value, currency)
+const formatPercent2 = (value: number) => `${Math.round((Number.isFinite(value) ? value : 0) * 100) / 100}`
 
 const EXPENSE_CATEGORIES = [
   'Housing',
@@ -2425,7 +2426,7 @@ ${spendingDNA
     >
       {/* Sidebar */}
       <aside data-finwise-no-print
-        className={`${sidebar} text-white w-64 min-h-screen hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r`}
+        className={`${sidebar} text-white w-64 h-screen overflow-y-auto hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r`}
       >
         <div className="p-6 border-b border-slate-800">
           <div className="rounded-2xl overflow-hidden bg-slate-950 shadow-lg">
@@ -2508,7 +2509,7 @@ ${spendingDNA
       {/* FinWise AI Robot Guide */}
       <div
         data-finwise-robot
-        className="fixed z-40 block w-44 sm:w-52 lg:w-60 h-48 sm:h-52 lg:h-56"
+        className="fixed z-40 block w-36 sm:w-44 lg:w-52 h-44 sm:h-52 lg:h-60 pointer-events-none"
         style={{ right: samPosition.right, bottom: samPosition.bottom }}
       >
         <motion.div
@@ -2518,7 +2519,7 @@ ${spendingDNA
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           className="absolute inset-x-0 bottom-0 h-full pointer-events-none"
         >
-          <div className="absolute top-0 right-0 w-40 sm:w-48 lg:w-52 rounded-2xl bg-white text-slate-900 px-3 py-3 shadow-2xl border border-cyan-300">
+          <div className="hidden">
             <div className="flex items-start gap-2">
               <div className="flex-1 text-xs font-extrabold leading-tight">
                 Meet Sam, your AI Coach.<br />
@@ -2554,7 +2555,7 @@ ${spendingDNA
             onPointerMove={moveSamDrag}
             onPointerUp={stopSamDrag}
             onPointerCancel={stopSamDrag}
-            className="absolute left-0 sm:left-2 lg:left-3 bottom-0 w-24 sm:w-28 lg:w-32 h-auto drop-shadow-2xl pointer-events-auto cursor-grab active:cursor-grabbing select-none touch-none"
+            className="absolute left-0 sm:left-2 lg:left-3 bottom-0 w-[120px] sm:w-[140px] lg:w-[160px] h-auto drop-shadow-2xl pointer-events-auto cursor-grab active:cursor-grabbing select-none touch-none"
             animate={{ rotate: [0, 0.8, 0, -0.8, 0] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
           />
@@ -2586,7 +2587,7 @@ ${spendingDNA
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className={`hidden sm:block px-3 py-2 rounded-xl border text-sm ${
+                className={`w-[112px] sm:w-auto px-2 sm:px-3 py-2 rounded-xl border text-[11px] sm:text-sm shrink-0 ${
                   isDark
                     ? 'bg-slate-800 border-slate-700'
                     : 'bg-white border-gray-200'
@@ -2612,7 +2613,7 @@ ${spendingDNA
                 })}
               </select>
 
-              <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} title={fxUpdatedAt ? `FX rates updated ${fxUpdatedAt}` : 'Display currency'} className={`hidden sm:block px-3 py-2 rounded-xl border text-sm max-w-[150px] ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
+              <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} title={fxUpdatedAt ? `FX rates updated ${fxUpdatedAt}` : 'Display currency'} className={`w-[72px] sm:w-auto px-1 sm:px-3 py-2 rounded-xl border text-[11px] sm:text-sm max-w-[84px] sm:max-w-[150px] shrink-0 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
                 {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}
               </select>
 
