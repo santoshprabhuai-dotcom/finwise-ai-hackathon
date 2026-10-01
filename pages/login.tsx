@@ -35,6 +35,16 @@ export default function Login() {
       if (isSignUp) {
         const { error: signUpError } = await signUp(formData.email, formData.password, formData.fullName)
         if (signUpError) throw signUpError
+        // Notify the product owner without blocking account creation if email delivery is not configured.
+        try {
+          await fetch('/api/registration-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: formData.email, name: formData.fullName }),
+          })
+        } catch {
+          // Registration remains successful even if the optional notification is unavailable.
+        }
       } else {
         const { error: signInError } = await signIn(formData.email, formData.password)
         if (signInError) throw signInError
