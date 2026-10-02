@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { convertCurrency } from '@/lib/currency'
+import * as XLSX from 'xlsx'
 
 type Holding = {
   id: string; kind: 'stock' | 'mutual-fund'; country: string; symbol: string; name: string
@@ -90,6 +91,35 @@ export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRa
       persist([...holdings, ...parsed]); setImportText(''); setIsImportOpen(false); setMessage(parsed.length + ' holdings imported. Refresh quotes to fetch market data.')
     } catch (e: any) { setMessage('Import failed: ' + (e?.message || 'invalid JSON')) }
   }
+  const uploadWorkbook = async (file?: File) => {
+    if (!file) return
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' })
+      const rows = XLSX.utils.sheet_to_json<any>(workbook.Sheets[workbook.SheetNames[0]], { defval: '' })
+      const get = (row: any, ...keys: string[]) => {
+        const key = Object.keys(row).find((candidate) => keys.includes(candidate.trim().toLowerCase()))
+        return key ? row[key] : ''
+      }
+      const parsed: Holding[] = rows.map((row: any, index: number) => ({
+        id: String(Date.now()) + '-' + index,
+        kind: String(get(row, 'kind', 'type')).toLowerCase().includes('mutual') ? 'mutual-fund' : 'stock',
+        country: String(get(row, 'country', 'market') || 'IN').toUpperCase(),
+        symbol: String(get(row, 'symbol', 'ticker', 'scheme code') || '').trim().toUpperCase(),
+        name: String(get(row, 'name', 'company', 'fund name') || get(row, 'symbol', 'ticker') || '').trim(),
+        units: Number(get(row, 'units', 'shares', 'quantity')),
+        costPrice: Number(get(row, 'costprice', 'cost price', 'buy price', 'purchase price')),
+        currency: String(get(row, 'currency') || 'INR').toUpperCase(),
+        bookValuePerShare: get(row, 'bookvaluepershare', 'book value per share') === '' ? null : Number(get(row, 'bookvaluepershare', 'book value per share')),
+        fairValuePerShare: get(row, 'fairvaluepershare', 'fair value per share', 'fair value estimate') === '' ? null : Number(get(row, 'fairvaluepershare', 'fair value per share', 'fair value estimate')),
+      })).filter((item: Holding) => item.symbol && Number.isFinite(item.units) && item.units > 0 && Number.isFinite(item.costPrice) && item.costPrice >= 0)
+      if (!parsed.length) throw new Error('No valid rows. Include Symbol, Units, CostPrice and optionally Country, Currency, Kind.')
+      persist([...holdings, ...parsed])
+      setMessage(parsed.length + ' holdings imported. Refresh quotes to fetch current market data.')
+    } catch (error: any) {
+      setMessage('Upload failed: ' + (error?.message || 'Could not read file.'))
+    }
+  }
+
   const exportHoldings = () => {
     const blob = new Blob([JSON.stringify(holdings, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob); const a = document.createElement('a')
@@ -121,7 +151,7 @@ export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRa
           <input type="number" min="0" step="any" value={fairValue} onChange={e => setFairValue(e.target.value)} placeholder="Your fair-value estimate (optional)" className={field} />
           <button onClick={addHolding} disabled={busy} className="rounded-xl bg-teal-500 px-4 py-2.5 font-bold text-white disabled:opacity-50">{busy ? 'Saving…' : 'Save holding & quote'}</button>
         </div>
-        {isImportOpen && <div className="mt-3 space-y-2"><p className={'text-xs ' + muted}>Paste a JSON array with symbol, units, costPrice, and optionally kind, country, name, currency.</p><textarea value={importText} onChange={e => setImportText(e.target.value)} rows={4} className={field} placeholder={'[{"symbol":"RELIANCE","units":10,"costPrice":1200,"country":"IN","currency":"INR"}]'} /><button onClick={importHoldings} className="rounded-xl bg-cyan-600 px-4 py-2 text-white font-semibold">Import holdings</button></div>}
+        {isImportOpen && <div className="mt-3 space-y-2"><p className={'text-xs ' + muted}>Paste a JSON array with symbol, units, costPrice, and optionally kind, country, name, currency.</p><textarea value={importText} onChange={e => setImportText(e.target.value)} rows={4} className={field} placeholder={'[{"symbol":"RELIANCE","units":10,"costPrice":1200,"country":"IN","currency":"INR"}]'} /><button onClick={importHoldings} className="rounded-xl bg-cyan-600 px-4 py-2 text-white font-semibold">Import pasted JSON</button><label className="inline-flex rounded-xl border px-4 py-2 text-sm font-semibold cursor-pointer">Upload CSV / Excel<input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => { void uploadWorkbook(e.target.files?.[0]); e.currentTarget.value = '' }} /></label></div>}
         {message && <p role="status" className="text-sm mt-3 text-cyan-500">{message}</p>}
       </div>
     </div>
