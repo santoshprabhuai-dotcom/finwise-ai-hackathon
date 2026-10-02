@@ -14,7 +14,7 @@ const markets = [
   ['CN','China','CNY'],['JP','Japan','JPY'],['SA','Saudi Arabia','SAR'],['AE','United Arab Emirates','AED'],
 ]
 
-export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRates }: { userId: string; baseCurrency: string; isDark: boolean; fxRates: Record<string, number> }) {
+export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRates, onTotalsChange }: { userId: string; baseCurrency: string; isDark: boolean; fxRates: Record<string, number>; onTotalsChange?: (marketValue: number, costBasis: number) => void }) {
   const [holdings, setHoldings] = useState<Holding[]>([])
   const [kind, setKind] = useState<'stock' | 'mutual-fund'>('stock')
   const [country, setCountry] = useState('IN')
@@ -125,6 +125,7 @@ export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRa
     const url = URL.createObjectURL(blob); const a = document.createElement('a')
     a.href = url; a.download = 'finwise-investments.json'; a.click(); URL.revokeObjectURL(url)
   }
+  useEffect(() => { onTotalsChange?.(totals.market, totals.cost) }, [totals, onTotalsChange])
   const disclaimer = 'FinWise provides informational tools and estimates only, not investment advice, research recommendations, brokerage services, or a solicitation to buy or sell securities. Prices may be delayed, incomplete, adjusted, or unavailable. Historical highs/lows do not predict future results. Verify all data with the relevant exchange, fund house, and official filings. Investments involve risk, including loss of principal. Consult a SEBI-registered investment adviser in India or a suitably licensed professional in your jurisdiction before investing. FinWise and its publisher do not guarantee performance or accept responsibility for investment decisions made using this information, to the extent permitted by applicable law.'
   return <section className="space-y-5">
     <div className={'rounded-2xl border p-5 sm:p-6 ' + panel}>
