@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { convertCurrency, formatMoney, SUPPORTED_CURRENCIES } from '@/lib/currency'
 import * as XLSX from 'xlsx'
@@ -925,6 +925,10 @@ const [budgetForm, setBudgetForm] = useState({
     () => assets.reduce((sum, item) => sum + toBaseAmount(Number(item.current_value || 0), item.currency || 'INR'), 0),
     [assets, baseCurrency, fxRates]
   )
+  const updateInvestmentTotals = useCallback((marketValue: number, costBasis: number) => {
+    setInvestmentMarketValue(marketValue)
+    setInvestmentCostBasis(costBasis)
+  }, [])
   const totalAssets = recordedAssetsValue + investmentMarketValue
 
   const totalLiabilities = useMemo(
@@ -2875,7 +2879,7 @@ ${spendingDNA
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
           {activeTab === 'Investments' && (
-            <InvestmentPortfolio userId={user.id} baseCurrency={baseCurrency} isDark={isDark} fxRates={fxRates} onTotalsChange={(marketValue, costBasis) => { setInvestmentMarketValue(marketValue); setInvestmentCostBasis(costBasis) }} />
+            <InvestmentPortfolio userId={user.id} baseCurrency={baseCurrency} isDark={isDark} fxRates={fxRates} onTotalsChange={updateInvestmentTotals} />
           )}
 
           {/* OVERVIEW */}
