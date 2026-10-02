@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 const EXCHANGES: Record<string, string> = {
-  IN: '.NS', US: '', CA: '.TO', AU: '.AX', CN: '.SS', JP: '.T', SA: '.SR', AE: '.DFM',
+  IN: '.NS', US: '', CA: '.TO', AU: '.AX', CN: '.SS', JP: '.T', SA: '.SR', AE: '.AE',
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -38,17 +38,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const meta = result.meta || {}
     const quote = result.indicators?.quote?.[0] || {}
     const closes = (quote.close || []).filter((value: any) => Number.isFinite(value))
+    const highs = quote.high || []
+    const lows = quote.low || []
     const timestamps = result.timestamp || []
     const cutoff = Date.now() / 1000 - 365 * 24 * 60 * 60
-    const yearValues = closes.filter((value: number, index: number) => timestamps[index] >= cutoff)
+    const yearHighs = highs.filter((value: any, index: number) => Number.isFinite(value) && timestamps[index] >= cutoff)
+    const yearLows = lows.filter((value: any, index: number) => Number.isFinite(value) && timestamps[index] >= cutoff)
     return res.status(200).json({
       symbol: meta.symbol || ticker, name: meta.longName || meta.shortName || ticker,
       currency: meta.currency || (country === 'IN' ? 'INR' : country === 'CA' ? 'CAD' : country === 'AU' ? 'AUD' : country === 'JP' ? 'JPY' : country === 'SA' || country === 'AE' ? 'SAR' : country === 'CN' ? 'CNY' : 'USD'),
       price: meta.regularMarketPrice ?? closes[closes.length - 1] ?? null,
       priceDate: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : null,
-      high52: meta.fiftyTwoWeekHigh ?? (yearValues.length ? Math.max(...yearValues) : null),
-      low52: meta.fiftyTwoWeekLow ?? (yearValues.length ? Math.min(...yearValues) : null),
-      allTimeHigh: closes.length ? Math.max(...closes) : null, allTimeLow: closes.length ? Math.min(...closes) : null,
+      high52: meta.fiftyTwoWeekHigh ?? (yearHighs.length ? Math.max(...yearHighs) : null),
+      low52: meta.fiftyTwoWeekLow ?? (yearLows.length ? Math.min(...yearLows) : null),
+      allTimeHigh: highs.filter((value: any) => Number.isFinite(value)).length ? Math.max(...highs.filter((value: any) => Number.isFinite(value))) : (closes.length ? Math.max(...closes) : null),
+      allTimeLow: lows.filter((value: any) => Number.isFinite(value)).length ? Math.min(...lows.filter((value: any) => Number.isFinite(value))) : (closes.length ? Math.min(...closes) : null),
       source: 'Yahoo Finance chart data', fetchedAt: new Date().toISOString(),
     })
   } catch {
