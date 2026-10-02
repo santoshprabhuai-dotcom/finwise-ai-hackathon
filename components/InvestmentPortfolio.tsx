@@ -82,11 +82,11 @@ export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRa
     try {
       const rows = JSON.parse(importText)
       if (!Array.isArray(rows)) throw new Error('Expected a JSON array.')
-      const parsed = rows.map((r: any, i: number) => ({
+      const parsed: Holding[] = rows.map((r: any, i: number) => ({
         id: String(Date.now()) + '-' + i, kind: r.kind === 'mutual-fund' ? 'mutual-fund' : 'stock',
         country: String(r.country || 'IN').toUpperCase(), symbol: String(r.symbol || '').toUpperCase(),
         name: String(r.name || r.symbol || ''), units: Number(r.units), costPrice: Number(r.costPrice), currency: String(r.currency || 'INR'),
-      })).filter((r: Holding) => r.symbol && r.units > 0 && r.costPrice >= 0 && Number.isFinite(r.units) && Number.isFinite(r.costPrice))
+      })).filter((r) => r.symbol && r.units > 0 && r.costPrice >= 0 && Number.isFinite(r.units) && Number.isFinite(r.costPrice))
       if (!parsed.length) throw new Error('No valid holdings found. Include symbol, units, and costPrice.')
       persist([...holdings, ...parsed]); setImportText(''); setIsImportOpen(false); setMessage(parsed.length + ' holdings imported. Refresh quotes to fetch market data.')
     } catch (e: any) { setMessage('Import failed: ' + (e?.message || 'invalid JSON')) }
