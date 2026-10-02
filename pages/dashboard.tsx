@@ -2605,7 +2605,7 @@ ${spendingDNA
               : 'bg-white/95 border-gray-200'
           } backdrop-blur`}
         >
-          <div className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
+          <div className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <button type="button" onClick={() => setIsMobileNavOpen(true)} className="lg:hidden w-10 h-10 shrink-0 rounded-xl bg-teal-500 text-white flex items-center justify-center" aria-label="Open navigation">
                 <FaBars />
@@ -2613,7 +2613,7 @@ ${spendingDNA
               <div className="min-w-0"><h1 className="text-base sm:text-xl font-bold truncate">{activeTab}</h1><p className={`hidden sm:block text-xs truncate ${muted}`}>{monthLabel(selectedMonth)}</p></div>
             </div>
 
-            <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 max-w-[74%] sm:max-w-none">
+            <div className="flex items-center justify-start sm:justify-end gap-1 sm:gap-2 shrink-0 w-full sm:w-auto max-w-full sm:max-w-none overflow-x-auto pb-0.5">
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
