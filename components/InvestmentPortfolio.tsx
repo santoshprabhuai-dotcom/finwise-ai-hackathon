@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { convertCurrency } from '@/lib/currency'
 
 type Holding = {
   id: string; kind: 'stock' | 'mutual-fund'; country: string; symbol: string; name: string
@@ -12,7 +13,7 @@ const markets = [
   ['CN','China','CNY'],['JP','Japan','JPY'],['SA','Saudi Arabia','SAR'],['AE','United Arab Emirates','AED'],
 ]
 
-export default function InvestmentPortfolio({ userId, baseCurrency, isDark }: { userId: string; baseCurrency: string; isDark: boolean }) {
+export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRates }: { userId: string; baseCurrency: string; isDark: boolean; fxRates: Record<string, number> }) {
   const [holdings, setHoldings] = useState<Holding[]>([])
   const [kind, setKind] = useState<'stock' | 'mutual-fund'>('stock')
   const [country, setCountry] = useState('IN')
@@ -45,10 +46,10 @@ export default function InvestmentPortfolio({ userId, baseCurrency, isDark }: { 
     try { window.localStorage.setItem('finwise-investments-' + userId, JSON.stringify(next)) } catch {}
   }
   const totals = useMemo(() => holdings.reduce((acc, h) => {
-    acc.cost += h.units * h.costPrice
-    acc.market += h.units * Number(h.currentPrice ?? h.costPrice)
+    acc.cost += convertCurrency(h.units * h.costPrice, h.currency, baseCurrency, fxRates)
+    acc.market += convertCurrency(h.units * Number(h.currentPrice ?? h.costPrice), h.currency, baseCurrency, fxRates)
     return acc
-  }, { cost: 0, market: 0 }), [holdings])
+  }, { cost: 0, market: 0 }), [holdings, baseCurrency, fxRates])
   const refreshQuote = async (holding: Holding) => {
     const response = await fetch('/api/market-quote?symbol=' + encodeURIComponent(holding.symbol) + '&country=' + holding.country + '&kind=' + holding.kind)
     const data = await response.json()
@@ -100,9 +101,9 @@ export default function InvestmentPortfolio({ userId, baseCurrency, isDark }: { 
         <div className="flex flex-wrap gap-2"><button disabled={busy || !holdings.length} onClick={refreshAll} className="rounded-xl bg-teal-500 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{busy ? 'Working…' : 'Refresh quotes'}</button><button onClick={exportHoldings} className="rounded-xl border px-4 py-2 text-sm font-semibold">Export</button><button onClick={() => setIsImportOpen(!isImportOpen)} className="rounded-xl border px-4 py-2 text-sm font-semibold">Import</button></div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
-        <div className={'rounded-xl p-4 ' + (dark ? 'bg-slate-900' : 'bg-slate-50')}><p className={'text-xs ' + muted}>Cost basis (mixed currencies)</p><p className="text-xl font-black mt-1">{format(totals.cost, holdings[0]?.currency || baseCurrency)}</p></div>
-        <div className={'rounded-xl p-4 ' + (dark ? 'bg-slate-900' : 'bg-slate-50')}><p className={'text-xs ' + muted}>Market value (mixed currencies)</p><p className="text-xl font-black mt-1">{format(totals.market, holdings[0]?.currency || baseCurrency)}</p></div>
-        <div className={'rounded-xl p-4 ' + (dark ? 'bg-slate-900' : 'bg-slate-50')}><p className={'text-xs ' + muted}>Unrealized P/L (mixed currencies)</p><p className={'text-xl font-black mt-1 ' + (totals.market >= totals.cost ? 'text-emerald-500' : 'text-red-500')}>{format(totals.market - totals.cost, holdings[0]?.currency || baseCurrency)}</p><p className={'text-[11px] mt-1 ' + muted}>Values above use the first holding’s currency and are not FX-converted.</p></div>
+        <div className={'rounded-xl p-4 ' + (dark ? 'bg-slate-900' : 'bg-slate-50')}><p className={'text-xs ' + muted}>Cost basis · {baseCurrency}</p><p className="text-xl font-black mt-1">{format(totals.cost, baseCurrency)}</p></div>
+        <div className={'rounded-xl p-4 ' + (dark ? 'bg-slate-900' : 'bg-slate-50')}><p className={'text-xs ' + muted}>Market value · {baseCurrency}</p><p className="text-xl font-black mt-1">{format(totals.market, baseCurrency)}</p></div>
+        <div className={'rounded-xl p-4 ' + (dark ? 'bg-slate-900' : 'bg-slate-50')}><p className={'text-xs ' + muted}>Unrealized P/L · {baseCurrency}</p><p className={'text-xl font-black mt-1 ' + (totals.market >= totals.cost ? 'text-emerald-500' : 'text-red-500')}>{format(totals.market - totals.cost, baseCurrency)}</p><p className={'text-[11px] mt-1 ' + muted}>Portfolio totals are converted using the latest available FinWise FX table; rates may be delayed or unavailable.</p></div>
       </div>
       <div className={'mt-4 rounded-xl border p-4 ' + (dark ? 'border-slate-700' : 'border-gray-200')}>
         <h3 className="font-bold mb-3">Add a holding</h3>
