@@ -213,6 +213,8 @@ export default function Dashboard() {
   const [budgets, setBudgets] = useState<any[]>([])
   const [goals, setGoals] = useState<any[]>([])
   const [assets, setAssets] = useState<any[]>([])
+  const [investmentMarketValue, setInvestmentMarketValue] = useState(0)
+  const [investmentCostBasis, setInvestmentCostBasis] = useState(0)
   const [liabilities, setLiabilities] = useState<any[]>([])
   const [creditProfiles, setCreditProfiles] = useState<any[]>([])
 
@@ -919,10 +921,11 @@ const [budgetForm, setBudgetForm] = useState({
     return rows
   }, [monthTransactions, stats.totalIncome, stats.netSavings, baseCurrency, fxRates])
 
-  const totalAssets = useMemo(
+  const recordedAssetsValue = useMemo(
     () => assets.reduce((sum, item) => sum + toBaseAmount(Number(item.current_value || 0), item.currency || 'INR'), 0),
     [assets, baseCurrency, fxRates]
   )
+  const totalAssets = recordedAssetsValue + investmentMarketValue
 
   const totalLiabilities = useMemo(
     () => liabilities.reduce((sum, item) => sum + toBaseAmount(Number(item.outstanding_amount || 0), item.currency || 'INR'), 0),
@@ -2872,7 +2875,7 @@ ${spendingDNA
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
           {activeTab === 'Investments' && (
-            <InvestmentPortfolio userId={user.id} baseCurrency={baseCurrency} isDark={isDark} fxRates={fxRates} />
+            <InvestmentPortfolio userId={user.id} baseCurrency={baseCurrency} isDark={isDark} fxRates={fxRates} onTotalsChange={(marketValue, costBasis) => { setInvestmentMarketValue(marketValue); setInvestmentCostBasis(costBasis) }} />
           )}
 
           {/* OVERVIEW */}
