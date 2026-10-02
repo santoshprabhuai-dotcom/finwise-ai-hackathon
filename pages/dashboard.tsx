@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { convertCurrency, formatMoney, SUPPORTED_CURRENCIES } from '@/lib/currency'
 import * as XLSX from 'xlsx'
 import { FINWISE_LOGO_DATA } from '@/lib/finwise-logo'
-import { SAM_COACH_IMAGE } from '@/lib/sam-coach'
+import SamAvatar from '@/components/SamAvatar'
 import InvestmentPortfolio from '@/components/InvestmentPortfolio'
 import {
   BarChart,
@@ -2579,19 +2579,18 @@ ${spendingDNA
           >
             {isSpeaking ? <FaStop /> : <FaVolumeUp />}
           </button>
-          <motion.img
-            key={isSpeaking ? 'speaking' : 'idle'}
-            src={SAM_COACH_IMAGE}
-            alt="Sam, the FinWise AI Coach"
-            draggable={false}
-            onPointerDown={startSamDrag}
-            onPointerMove={moveSamDrag}
-            onPointerUp={stopSamDrag}
-            onPointerCancel={stopSamDrag}
-            className="absolute left-0 sm:left-2 lg:left-3 bottom-0 w-[120px] sm:w-[140px] lg:w-[160px] h-auto drop-shadow-2xl pointer-events-auto cursor-grab active:cursor-grabbing select-none touch-none"
-            animate={{ rotate: [0, 0.8, 0, -0.8, 0] }}
-            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-          />
+          <motion.div
+            onPointerDown={startSamDrag as any}
+            onPointerMove={moveSamDrag as any}
+            onPointerUp={stopSamDrag as any}
+            onPointerCancel={stopSamDrag as any}
+            className="absolute left-0 sm:left-2 lg:left-3 bottom-0 w-[120px] sm:w-[140px] lg:w-[160px] h-[155px] sm:h-[180px] lg:h-[205px] pointer-events-auto cursor-grab active:cursor-grabbing select-none touch-none"
+            animate={{ rotate: [0, 0.8, 0, -0.8, 0], y: isTouring ? [0, -7, 0, -3, 0] : [0, -2, 0, -2, 0] }}
+            transition={{ duration: isSpeaking ? 0.65 : 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ touchAction: 'none' }}
+          >
+            <SamAvatar voice={coachVoice} speaking={isSpeaking} className="w-full h-full" />
+          </motion.div>
         </motion.div>
       </div>
 
