@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { convertCurrency, formatMoney, SUPPORTED_CURRENCIES } from '@/lib/currency'
 import * as XLSX from 'xlsx'
 import { FINWISE_LOGO_DATA } from '@/lib/finwise-logo'
-import SamAvatar from '@/components/SamAvatar'
+import SamVideoAvatar from '@/components/SamVideoAvatar'
 import InvestmentPortfolio from '@/components/InvestmentPortfolio'
 import {
   BarChart,
@@ -2589,7 +2589,7 @@ ${spendingDNA
             transition={{ duration: isSpeaking ? 0.65 : 2.2, repeat: Infinity, ease: 'easeInOut' }}
             style={{ touchAction: 'none' }}
           >
-            <SamAvatar voice={coachVoice} speaking={isSpeaking} className="w-full h-full" />
+            <SamVideoAvatar voice={coachVoice} speaking={isSpeaking} className="w-full h-full" />
           </motion.div>
         </motion.div>
       </div>
