@@ -4,6 +4,7 @@ import { convertCurrency, formatMoney, SUPPORTED_CURRENCIES } from '@/lib/curren
 import * as XLSX from 'xlsx'
 import { FINWISE_LOGO_DATA } from '@/lib/finwise-logo'
 import { SAM_COACH_IMAGE } from '@/lib/sam-coach'
+import InvestmentPortfolio from '@/components/InvestmentPortfolio'
 import {
   BarChart,
   Bar,
@@ -891,38 +892,32 @@ const [budgetForm, setBudgetForm] = useState({
   }, [transactions, baseCurrency, fxRates])
 
   const waterfallData = useMemo(() => {
-    const categoryTotals: Record<string, number> = {}
-    monthTransactions
-      .filter((tx) => tx.transaction_type === 'expense')
-      .forEach((tx) => {
-        const category = tx.category || 'Other Expense'
-        categoryTotals[category] = (categoryTotals[category] || 0) + toBaseAmount(Number(tx.amount || 0), tx.currency || 'INR')
-      })
-    const majorExpenses = Object.entries(categoryTotals)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-    const totalExpense = Math.max(0, stats.totalExpenses)
-    const visibleExpense = majorExpenses.reduce((sum, [, value]) => sum + value, 0)
-    const rows: any[] = [
-      { name: 'Income', base: 0, value: Math.max(0, stats.totalIncome), display: stats.totalIncome, kind: 'income' },
-    ]
-    let remaining = Math.max(0, stats.totalIncome)
-    majorExpenses.forEach(([category, value]) => {
-      const expense = Math.min(value, remaining)
-      remaining -= expense
-      rows.push({ name: category, base: Math.max(0, remaining), value: expense, display: -expense, kind: 'expense' })
+    const incomeBySource: Record<string, number> = {}
+    const expensesByCategory: Record<string, number> = {}
+    monthTransactions.forEach((tx) => {
+      const category = String(tx.category || (tx.transaction_type === 'income' ? 'Other Income' : 'Other Expense')).trim()
+      const amount = toBaseAmount(Number(tx.amount || 0), tx.currency || 'INR')
+      const totals = tx.transaction_type === 'income' ? incomeBySource : expensesByCategory
+      totals[category] = (totals[category] || 0) + amount
     })
-    const otherExpense = Math.max(0, totalExpense - visibleExpense)
-    if (otherExpense > 0) {
-      const expense = Math.min(otherExpense, remaining)
-      remaining -= expense
-      rows.push({ name: 'Other expenses', base: Math.max(0, remaining), value: expense, display: -expense, kind: 'expense' })
-    }
-    const savings = stats.netSavings
-    if (savings >= 0) rows.push({ name: 'Net Savings', base: 0, value: savings, display: savings, kind: 'savings' })
-    else rows.push({ name: 'Net Savings', base: savings, value: Math.abs(savings), display: savings, kind: 'negative' })
+    const rows: any[] = []
+    let running = 0
+    const incomeRows = Object.entries(incomeBySource).sort((a, b) => b[1] - a[1])
+    if (!incomeRows.length && stats.totalIncome > 0) incomeRows.push(['Income', stats.totalIncome])
+    incomeRows.forEach(([name, amount]) => {
+      const value = Math.max(0, amount)
+      rows.push({ name, base: Math.max(0, running), value, display: value, kind: 'income' })
+      running += value
+    })
+    Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).forEach(([name, amount]) => {
+      const expense = Math.max(0, amount)
+      rows.push({ name, base: Math.max(0, running - expense), value: expense, display: -expense, kind: 'expense' })
+      running -= expense
+    })
+    const savings = Number(stats.netSavings || 0)
+    rows.push({ name: 'Net Savings', base: 0, value: Math.abs(savings), display: savings, kind: savings >= 0 ? 'savings' : 'negative' })
     return rows
-  }, [monthTransactions, stats, baseCurrency, fxRates])
+  }, [monthTransactions, stats.totalIncome, stats.netSavings, baseCurrency, fxRates])
 
   const totalAssets = useMemo(
     () => assets.reduce((sum, item) => sum + toBaseAmount(Number(item.current_value || 0), item.currency || 'INR'), 0),
@@ -979,6 +974,10 @@ const [budgetForm, setBudgetForm] = useState({
     {
       label: 'Financial Position',
       icon: <FaLandmark />,
+    },
+    {
+      label: 'Investments',
+      icon: <FaChartPie />,
     },
     {
       label: 'Net Worth',
@@ -2600,21 +2599,18 @@ ${spendingDNA
           } backdrop-blur`}
         >
           <div className="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <button type="button" onClick={() => setIsMobileNavOpen(true)} className="lg:hidden w-10 h-10 shrink-0 rounded-xl bg-teal-500 text-white flex items-center justify-center" aria-label="Open navigation">
                 <FaBars />
               </button>
-              <h1 className="text-lg sm:text-xl font-bold truncate">{activeTab}</h1>
-              <p className={`text-xs ${muted}`}>
-                {monthLabel(selectedMonth)}
-              </p>
+              <div className="min-w-0"><h1 className="text-base sm:text-xl font-bold truncate">{activeTab}</h1><p className={`hidden sm:block text-xs truncate ${muted}`}>{monthLabel(selectedMonth)}</p></div>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 max-w-[74%] sm:max-w-none">
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className={`w-[112px] sm:w-auto px-2 sm:px-3 py-2 rounded-xl border text-[11px] sm:text-sm shrink-0 ${
+                className={`w-[102px] xs:w-[112px] sm:w-auto min-w-0 px-1.5 sm:px-3 py-2 rounded-xl border text-[10px] sm:text-sm shrink-0 ${
                   isDark
                     ? 'bg-slate-800 border-slate-700'
                     : 'bg-white border-gray-200'
@@ -2640,13 +2636,14 @@ ${spendingDNA
                 })}
               </select>
 
-              <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} title={fxUpdatedAt ? `FX rates updated ${fxUpdatedAt}` : 'Display currency'} className={`w-[72px] sm:w-auto px-1 sm:px-3 py-2 rounded-xl border text-[11px] sm:text-sm max-w-[84px] sm:max-w-[150px] shrink-0 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
+              <select value={baseCurrency} onChange={(e) => changeBaseCurrency(e.target.value)} title={fxUpdatedAt ? `FX rates updated ${fxUpdatedAt}` : 'Display currency'} className={`w-[58px] sm:w-auto px-1 sm:px-3 py-2 rounded-xl border text-[10px] sm:text-sm max-w-[64px] sm:max-w-[150px] shrink-0 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
                 {SUPPORTED_CURRENCIES.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}
               </select>
 
+              <button type="button" onClick={() => changeTheme(isDark ? 'light' : 'dark')} className={`h-10 px-2 sm:px-3 rounded-xl border text-xs sm:text-sm font-semibold whitespace-nowrap ${isDark ? 'bg-slate-800 border-slate-700 text-amber-300' : 'bg-white border-gray-200 text-slate-700'}`} aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'} title="Toggle light / dark mode">{isDark ? '☀️' : '🌙'}<span className="hidden sm:inline ml-1">{isDark ? 'Light' : 'Dark'}</span></button>
               <button
                 onClick={() => setShowCoach(true)}
-                className="w-10 h-10 rounded-xl flex items-center justify-center bg-violet-500 text-white hover:bg-violet-600"
+                className="w-9 h-10 sm:w-10 rounded-xl flex items-center justify-center bg-violet-500 text-white hover:bg-violet-600"
                 title="Sam — AI Coach"
                 aria-label="Open Sam, AI Coach"
               >
@@ -2874,6 +2871,10 @@ ${spendingDNA
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+          {activeTab === 'Investments' && (
+            <InvestmentPortfolio userId={user.id} baseCurrency={baseCurrency} isDark={isDark} />
+          )}
+
           {/* OVERVIEW */}
           {activeTab === 'Overview' && (
             <>
@@ -3163,24 +3164,28 @@ ${spendingDNA
                     <div><h3 className="text-lg font-bold">Cash Flow Waterfall</h3><p className={`text-sm mt-1 ${muted}`}>Income → expenses → net savings for {monthLabel(selectedMonth)}</p></div>
                     <span className="text-xs font-bold px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-600">{baseCurrency}</span>
                   </div>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={waterfallData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} />
-                      <XAxis dataKey="name" stroke={isDark ? '#94a3b8' : '#6b7280'} />
-                      <YAxis stroke={isDark ? '#94a3b8' : '#6b7280'} />
-                      <Tooltip formatter={(value: any, name: string, item: any) => [money(Number(item?.payload?.display ?? value)), 'Amount']} />
-                      <Bar dataKey="base" stackId="waterfall" fill="transparent" />
-                      <Bar dataKey="value" stackId="waterfall" radius={[6,6,0,0]}>
-                        {waterfallData.map((entry: any, index: number) => (
-                          <Cell key={`waterfall-${index}`} fill={entry.kind === 'income' ? '#10b981' : entry.kind === 'expense' ? '#ef4444' : entry.kind === 'negative' ? '#f97316' : '#3b82f6'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 text-xs">
-                    <div><p className={muted}>Income</p><p className="font-black text-emerald-500">{money(stats.totalIncome)}</p></div>
-                    <div><p className={muted}>Major expenses</p><p className="font-black text-red-500">{waterfallData.filter((x:any) => x.kind === 'expense').slice(0,4).map((x:any) => x.name).join(' • ') || 'None'}</p></div>
-                    <div><p className={muted}>Net savings</p><p className={`font-black ${stats.netSavings >= 0 ? 'text-blue-500' : 'text-orange-500'}`}>{money(stats.netSavings)}</p></div>
+                  <div className="w-full overflow-x-auto overflow-y-hidden">
+                    <div style={{ minWidth: Math.max(560, waterfallData.length * 68) }}>
+                      <ResponsiveContainer width="100%" height={Math.min(500, Math.max(340, waterfallData.length * 24))}>
+                        <BarChart data={waterfallData} margin={{ top: 12, right: 18, left: 6, bottom: 62 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} />
+                          <XAxis dataKey="name" interval={0} angle={-32} textAnchor="end" height={86} tick={{ fontSize: 11 }} stroke={isDark ? '#94a3b8' : '#6b7280'} />
+                          <YAxis width={74} tickFormatter={(value: number) => new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value)} stroke={isDark ? '#94a3b8' : '#6b7280'} />
+                          <Tooltip labelFormatter={(label: any) => String(label)} formatter={(value: any, name: string, item: any) => [money(Number(item?.payload?.display ?? value)), item?.payload?.kind === 'expense' ? 'Expense' : item?.payload?.kind === 'income' ? 'Income' : 'Net savings']} />
+                          <Bar dataKey="base" stackId="waterfall" fill="transparent" />
+                          <Bar dataKey="value" stackId="waterfall" radius={[6,6,0,0]}>
+                            {waterfallData.map((entry: any, index: number) => (
+                              <Cell key={`waterfall-${index}`} fill={entry.kind === 'income' ? '#10b981' : entry.kind === 'expense' ? '#ef4444' : entry.kind === 'negative' ? '#f97316' : '#3b82f6'} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 text-xs">
+                    <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-emerald-50'}`}><p className={muted}>Income sources · {waterfallData.filter((x:any) => x.kind === 'income').length}</p><p className="font-black text-emerald-500">{money(stats.totalIncome)}</p></div>
+                    <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-red-50'}`}><p className={muted}>Expense categories · {waterfallData.filter((x:any) => x.kind === 'expense').length}</p><p className="font-black text-red-500">{money(stats.totalExpenses)}</p></div>
+                    <div className={`rounded-xl p-3 ${isDark ? 'bg-slate-900' : 'bg-blue-50'}`}><p className={muted}>Net savings</p><p className={`font-black ${stats.netSavings >= 0 ? 'text-blue-500' : 'text-orange-500'}`}>{money(stats.netSavings)}</p></div>
                   </div>
                 </div>
                 <div className={`rounded-2xl border p-6 ${card}`}>
