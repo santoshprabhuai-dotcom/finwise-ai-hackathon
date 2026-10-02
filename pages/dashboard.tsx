@@ -2872,7 +2872,7 @@ ${spendingDNA
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
           {activeTab === 'Investments' && (
-            <InvestmentPortfolio userId={user.id} baseCurrency={baseCurrency} isDark={isDark} />
+            <InvestmentPortfolio userId={user.id} baseCurrency={baseCurrency} isDark={isDark} fxRates={fxRates} />
           )}
 
           {/* OVERVIEW */}
