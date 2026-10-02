@@ -83,7 +83,7 @@ export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRa
       const rows = JSON.parse(importText)
       if (!Array.isArray(rows)) throw new Error('Expected a JSON array.')
       const parsed: Holding[] = rows.map((r: any, i: number) => ({
-        id: String(Date.now()) + '-' + i, kind: r.kind === 'mutual-fund' ? 'mutual-fund' : 'stock',
+        id: String(Date.now()) + '-' + i, kind: (r.kind === 'mutual-fund' ? 'mutual-fund' : 'stock') as Holding['kind'],
         country: String(r.country || 'IN').toUpperCase(), symbol: String(r.symbol || '').toUpperCase(),
         name: String(r.name || r.symbol || ''), units: Number(r.units), costPrice: Number(r.costPrice), currency: String(r.currency || 'INR'),
       })).filter((r) => r.symbol && r.units > 0 && r.costPrice >= 0 && Number.isFinite(r.units) && Number.isFinite(r.costPrice))
@@ -102,7 +102,7 @@ export default function InvestmentPortfolio({ userId, baseCurrency, isDark, fxRa
       }
       const parsed: Holding[] = rows.map((row: any, index: number) => ({
         id: String(Date.now()) + '-' + index,
-        kind: String(get(row, 'kind', 'type')).toLowerCase().includes('mutual') ? 'mutual-fund' : 'stock',
+        kind: (String(get(row, 'kind', 'type')).toLowerCase().includes('mutual') ? 'mutual-fund' : 'stock') as Holding['kind'],
         country: String(get(row, 'country', 'market') || 'IN').toUpperCase(),
         symbol: String(get(row, 'symbol', 'ticker', 'scheme code') || '').trim().toUpperCase(),
         name: String(get(row, 'name', 'company', 'fund name') || get(row, 'symbol', 'ticker') || '').trim(),
