@@ -494,7 +494,9 @@ const [budgetForm, setBudgetForm] = useState({
     window.speechSynthesis.cancel()
     setIsSpeaking(true)
 
-    const utterance = new SpeechSynthesisUtterance(message)
+    // Expand the acronym for natural, professional speech synthesis while keeping UI copy unchanged.
+    const spokenMessage = message.replace(/\bA\.?I\.?\b/gi, 'Artificial Intelligence')
+    const utterance = new SpeechSynthesisUtterance(spokenMessage)
     const voices = window.speechSynthesis.getVoices()
     const preferred = voices.find((voice) => /en-IN|en-GB|en-US/i.test(voice.lang) && (coachVoice === 'female' ? /female|zira|samantha|karen|serena|aria|jenny/i.test(voice.name) : /male|david|daniel|george|guy|ryan/i.test(voice.name)))
     if (preferred) utterance.voice = preferred
