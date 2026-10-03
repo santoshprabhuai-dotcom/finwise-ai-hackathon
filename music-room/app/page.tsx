@@ -40,6 +40,8 @@ export default function Home() {
   const [videoId, setVideoId] = useState(STARTER_VIDEO);
   const [currentTitle, setCurrentTitle] = useState("Your first track");
   const [startAt, setStartAt] = useState(339);
+  const [chantTarget, setChantTarget] = useState(108);
+  const [chantCount, setChantCount] = useState(0);
   const [songInput, setSongInput] = useState("");
   const [titleInput, setTitleInput] = useState("");
   const [favorites, setFavorites] = useState<SavedSong[]>([]);
@@ -273,6 +275,13 @@ export default function Home() {
               <div className="track-art"><span>♫</span><i /></div>
               <div className="track-copy"><span className="track-label">CURRENT SELECTION</span><h3>{currentTitle}</h3><p>Streaming via YouTube</p></div>
               <button className="icon-button favorite-action" onClick={addFavorite} aria-label="Save current song to favorites" title="Save to favorites">♡</button>
+            </div>
+            <div className="chant-counter" aria-label="Chant repetition counter">
+              <div className="chant-counter-heading"><div><span className="eyebrow">YOUR PRACTICE</span><h4>Chanting counter</h4><p>Set your goal and tap once for each completed chant.</p></div><div className="chant-count-display"><strong>{chantCount}</strong><span>of {chantTarget}</span></div></div>
+              <label htmlFor="chant-target">Target repetitions</label>
+              <div className="chant-target-row"><input id="chant-target" type="number" min="1" max="100000" step="1" value={chantTarget} onChange={(e) => setChantTarget(Math.max(1, Math.min(100000, Number(e.target.value) || 1)))} /><button className="button button-outline" onClick={() => setChantCount(0)} type="button">Reset</button></div>
+              <div className="chant-progress" role="progressbar" aria-label="Chanting goal progress" aria-valuemin={0} aria-valuemax={chantTarget} aria-valuenow={Math.min(chantCount, chantTarget)}><span style={{ width: `${Math.min(100, (chantCount / chantTarget) * 100)}%` }} /></div>
+              <div className="chant-counter-bottom"><span>{chantCount >= chantTarget ? "Goal complete — well done." : `${Math.max(0, chantTarget - chantCount)} repetitions to go`}</span><button className="button button-primary" onClick={() => setChantCount((count) => count + 1)} type="button">＋ Count chant</button></div>
             </div>
             <div className="player-actions"><button className="button button-primary" onClick={() => window.open(videoUrl(videoId) + (startAt ? `&t=${startAt}s` : ""), "_blank", "noopener,noreferrer")}>↗ Open on YouTube</button><button className="button button-outline" onClick={addToPlaylist}>＋ Add to playlist</button></div>
             <p className="player-footnote">Playback controls are provided by YouTube. Some videos may restrict embedded playback.</p>
