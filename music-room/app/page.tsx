@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { getSupabase, type MusicSong } from "@/lib/supabase";
+import { getSupabase, type MusicSong } from "../lib/supabase";
 
 const STARTER_VIDEO = "lk3hR_2PaCE";
 const STARTER_URL = "https://www.youtube.com/watch?v=lk3hR_2PaCE&t=339s";
