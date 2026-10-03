@@ -59,3 +59,6 @@ Then visit Authentication → URL Configuration and add your local URL (`http://
 - YouTube playback remains subject to video availability, embedding settings, regional restrictions, and YouTube's terms. The app embeds YouTube's official player; it does not download or rehost audio.
 - The initial player seeks to 339 seconds (5:39). YouTube seeks to a nearby keyframe, so the exact start can vary slightly.
 - The app's library requires the SQL migration and Supabase environment variables. Without those, the player and visual interface still render, but account features are disabled.
+
+
+If a Vercel build log shows the root `finwise-ai` package instead of `my-music-room`, the Vercel project's Root Directory is still pointing at the repository root. Change it to `music-room` in Project Settings → Build and Deployment, then redeploy this branch.
