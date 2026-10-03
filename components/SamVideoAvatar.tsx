@@ -25,12 +25,12 @@ export default function SamVideoAvatar({ voice, speaking, className = '' }: Prop
         .sam-image-avatar { perspective: 900px; background: transparent; filter: drop-shadow(0 8px 14px rgba(1,18,40,.22)); transform-style: preserve-3d; }
         .sam-ai-image { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; user-select:none; pointer-events:none; backface-visibility:visible; }
         .sam-image-avatar.turn-half .sam-ai-image { animation: samHalfTurn 1.3s ease-in-out forwards; }
-        .sam-ai-mouth { position:absolute; left:48%; top:72%; width:5%; height:1.3%; border-radius:50%; border-bottom:2px solid rgba(103,235,255,.9); opacity:.85; transform:rotate(-8deg); }
-        .sam-image-avatar.is-speaking .sam-ai-mouth { height:2.4%; border:1px solid rgba(104,236,255,.95); background:rgba(12,28,54,.8); animation: samMouth 180ms ease-in-out infinite alternate; }
-        .sam-ai-eye { position:absolute; left:43%; top:54%; width:2.3%; height:1.4%; border-radius:100%; background:rgba(116,231,255,.9); opacity:.75; }
-        .sam-ai-eye-two { left:47%; top:52%; }
+        .sam-ai-mouth { position:absolute; left:56%; top:55%; width:10%; height:2.2%; border-radius:50%; border-bottom:2px solid rgba(103,235,255,.9); opacity:.85; transform:rotate(-8deg); }
+        .sam-image-avatar.is-speaking .sam-ai-mouth { height:3.6%; border:1px solid rgba(104,236,255,.95); background:rgba(12,28,54,.8); animation: samMouth 180ms ease-in-out infinite alternate; }
+        .sam-ai-eye { position:absolute; left:53%; top:37%; width:5.5%; height:2.4%; border-radius:100%; background:rgba(116,231,255,.9); opacity:.75; }
+        .sam-ai-eye-two { left:69%; top:39%; width:5%; }
         .sam-image-avatar.is-speaking .sam-ai-eye { animation: samBlink 4.8s ease-in-out infinite; }
-        @keyframes samMouth { from { transform:scaleY(.35) rotate(-8deg); } to { transform:scaleY(1.6) rotate(-8deg); } }
+        @keyframes samMouth { 0% { transform:scaleY(.35) scaleX(.8) rotate(-8deg); border-radius:45%; } 35% { transform:scaleY(1.45) scaleX(1.08) rotate(-8deg); border-radius:35%; } 70% { transform:scaleY(.65) scaleX(.92) rotate(-8deg); border-radius:50%; } 100% { transform:scaleY(1.25) scaleX(1.02) rotate(-8deg); border-radius:40%; } }
         @keyframes samBlink { 0%, 42%, 48%, 100% { transform:scaleY(1); } 45% { transform:scaleY(.08); } }
         @keyframes samHalfTurn { from { transform:rotateY(0deg); } to { transform:rotateY(180deg); } }
         @media (prefers-reduced-motion: reduce) { .sam-image-avatar * { animation:none !important; } }
