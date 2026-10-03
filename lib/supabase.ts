@@ -3,13 +3,20 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Don't crash the Next.js build when Vercel hasn't been given the public
-// Supabase environment variables yet. Supabase-backed calls will still fail
-// gracefully at runtime until the variables are configured.
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.invalid',
-  supabaseAnonKey || 'placeholder-anon-key'
-)
+function requireSupabase() {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+  }
+  return createClient(supabaseUrl, supabaseAnonKey)
+}
+
+// Build-time safe: do not instantiate Supabase until a page action actually needs it.
+export const getSupabase = () => requireSupabase()
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_target, prop) {
+    return Reflect.get(requireSupabase(), prop)
+  },
+})
 
 // Auth functions
 export const signUp = async (email: string, password: string, fullName: string) => {
